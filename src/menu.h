@@ -5,6 +5,6 @@
 #ifndef KINCALC_MENU_H
 #define KINCALC_MENU_H
 
-int menu(char* title, char *items[], int length);
+int menu(const char* title, const char *items[], int length);
 
 #endif //KINCALC_MENU_H

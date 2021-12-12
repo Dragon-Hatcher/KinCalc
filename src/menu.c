@@ -12,33 +12,35 @@
 #define START_HEIGHT LINE_GAP
 #define START_WIDTH CHAR_GAP
 
-static void drawAtCharPos(int charX, int charY, char* str) {
+static void drawAtCharPos(int charX, int charY, const char* str) {
     int x = START_WIDTH + CHAR_WIDTH * charX;
     int y = START_HEIGHT + charY * LINE_HEIGHT;
     fontlib_SetCursorPosition(x, y);
     fontlib_DrawString(str);
 }
 
-int menu(char* title, char *items[], int length) {
+int menu(const char* title, const char *items[], int length) {
     gfx_FillScreen(0xFF);
 
     bottomMenu(3, 2, "CANCEL");
 
     drawAtCharPos(0, 0, title);
     for (int i = 0; i < length; i++) {
-        drawAtCharPos(2, i + 1, items[i]);
+        drawAtCharPos(1, i + 1, items[i]);
     }
 
     int selectedItem = 0;
-    drawAtCharPos(0, selectedItem + 1, ">");
+    drawAtCharPos(0, selectedItem + 1, "\x0F");
     sk_key_t key = os_GetCSC();
     while (key != sk_Enter && key != sk_Graph && key != sk_Trace) {
-        if (key == sk_Up && selectedItem != 0) {
+        if (key == sk_Up) {
             drawAtCharPos(0, selectedItem-- + 1, " ");
-            drawAtCharPos(0, selectedItem + 1, ">");
-        } else if (key == sk_Down && selectedItem != length - 1) {
+            if (selectedItem < 0) selectedItem = length - 1;
+            drawAtCharPos(0, selectedItem + 1, "\x0F");
+        } else if (key == sk_Down) {
             drawAtCharPos(0, selectedItem++ + 1, " ");
-            drawAtCharPos(0, selectedItem + 1, ">");
+            if (selectedItem == length) selectedItem = 0;
+            drawAtCharPos(0, selectedItem + 1, "\x0F");
         }
         key = os_GetCSC();
     }
