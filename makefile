@@ -18,5 +18,6 @@ THIS_DIR := $(firstword $(MAKEFILE_LIST))
 
 run:
 	make
-	cemu -s $(THIS_DIR)/../bin/$(NAME).8xp
+	echo $(MAKEFILE_LIST)
+	cemu -s $(abspath $(BINDIR))/$(NAME).8xp
 	cemu --launch $(NAME)
