@@ -5,19 +5,8 @@
 #include "menu.h"
 
 #include <graphx.h>
-#include <fontlibc.h>
 #include "bottom_menu.h"
-#include "init_font.h"
-
-#define START_HEIGHT LINE_GAP
-#define START_WIDTH CHAR_GAP
-
-static void drawAtCharPos(int charX, int charY, const char* str) {
-    int x = START_WIDTH + CHAR_WIDTH * charX;
-    int y = START_HEIGHT + charY * LINE_HEIGHT;
-    fontlib_SetCursorPosition(x, y);
-    fontlib_DrawString(str);
-}
+#include "draw_simple_text.h"
 
 int menu(const char* title, const char *items[], int length) {
     gfx_FillScreen(0xFF);

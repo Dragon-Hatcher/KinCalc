@@ -5,7 +5,7 @@
 #include <tice.h>
 #include <graphx.h>
 #include "init_font.h"
-#include "menu.h"
+#include "main_menu/main_menu.h"
 
 #define EXIT_ERROR(str) do { \
     gfx_End();               \
@@ -20,7 +20,7 @@ int main(void) {
 
     if(initFont()) EXIT_ERROR("Missing font OSLFONT.");
 
-    while(!os_GetCSC());
+    drawMainMenu();
 
     gfx_End();
 }
