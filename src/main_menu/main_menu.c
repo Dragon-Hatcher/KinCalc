@@ -119,79 +119,41 @@ static bool checkForNewParam(MMState *state) {
     return false;
 }
 
-static void initVars(Vars *vars) {
-    int varNum = 0;
-    for (int i = 0; i < CONST_ACC_COUNT; i++) {
-        vars->variables[varNum++] = (Variable) {.type = CONSTANT_ACCEL, .eqNum = i, .eqField = 0, .determined = false};
-        vars->variables[varNum++] = (Variable) {.type = CONSTANT_ACCEL, .eqNum = i, .eqField = 1, .determined = false};
-        vars->variables[varNum++] = (Variable) {.type = CONSTANT_ACCEL, .eqNum = i, .eqField = 2, .determined = false};
-        vars->variables[varNum++] = (Variable) {.type = CONSTANT_ACCEL, .eqNum = i, .eqField = 3, .determined = false};
-        vars->variables[varNum++] = (Variable) {.type = CONSTANT_ACCEL, .eqNum = i, .eqField = 4, .determined = false};
-    }
-    for (int i = 0; i < CONST_VEL_COUNT; i++) {
-        vars->variables[varNum++] = (Variable) {.type = CONSTANT_VEL, .eqNum = i, .eqField = 0, .determined = false};
-        vars->variables[varNum++] = (Variable) {.type = CONSTANT_VEL, .eqNum = i, .eqField = 1, .determined = false};
-        vars->variables[varNum++] = (Variable) {.type = CONSTANT_VEL, .eqNum = i, .eqField = 2, .determined = false};
-    }
-    for (int i = 0; i < VEL_SUM_COUNT; i++) {
-        vars->variables[varNum++] = (Variable) {.type = VELOCITY_SUM, .eqNum = i, .eqField = 0, .determined = false};
-        vars->variables[varNum++] = (Variable) {.type = VELOCITY_SUM, .eqNum = i, .eqField = 1, .determined = false};
-    }
-    for (int i = 0; i < FREE_VAR_COUNT; i++) {
-        vars->variables[varNum++] = (Variable) {.type = FREE_VAR, .eqNum = i, .eqField = 0, .determined = false};
-    }
-}
+void drawMainMenu(MMState *state, bool sec) {
+    state->scroll = 0;
+    state->selectedRow = 0;
+    redraw(state);
 
-void drawMainMenu(void) {
-    static ConstAccs accs = {.count = 0};
-    static ConstVels vels = {.count = 0};
-    static VelSums velSums = {.count = 0};
-    static FreeVars freeVars = {.count = 0};
-    static Vars vars;
-    initVars(&vars);
-
-    static AllEqs eqs = {
-            .accs = &accs,
-            .vels = &vels,
-            .velSums = &velSums,
-            .freeVars = &freeVars
-    };
-    static MMState state = {
-            .eqs = &eqs,
-            .selectedRow = 0,
-            .scroll = 0,
-            .editingParam = NULL
-    };
-
-    fixScroll(&state);
-    redraw(&state);
+    if (sec) return;
 
     do {
         sk_key_t key = os_GetCSC();
         if (key == sk_Yequ) break;
         if (key == sk_Window || key == sk_Zoom) {
-            newEq(&eqs);
-            state.scroll = 0;
-            redraw(&state);
+            newEq(state->eqs);
+            state->scroll = 0;
+            state->selectedRow = 0;
+            redraw(state);
         }
         if (key == sk_Trace || key == sk_Graph) {
             solve();
-            state.scroll = 0;
-            redraw(&state);
+            state->scroll = 0;
+            state->selectedRow = 0;
+            redraw(state);
         }
-        if (key == sk_Up && state.selectedRow != 0) {
-            state.selectedRow--;
-            fixScroll(&state);
-            redraw(&state);
+        if (key == sk_Up && state->selectedRow != 0) {
+            state->selectedRow--;
+            fixScroll(state);
+            redraw(state);
         }
-        if (key == sk_Down && state.selectedRow != rowCount(&eqs) - 1) {
-            state.selectedRow++;
-            fixScroll(&state);
-            redraw(&state);
+        if (key == sk_Down && state->selectedRow != rowCount(state->eqs) - 1) {
+            state->selectedRow++;
+            fixScroll(state);
+            redraw(state);
         }
         if (key == sk_Enter) {
-            if (checkForNewParam(&state)) {}
-            redraw(&state);
+            if (checkForNewParam(state)) {}
+            redraw(state);
         }
     } while (true);
 }

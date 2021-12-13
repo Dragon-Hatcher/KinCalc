@@ -14,6 +14,6 @@ typedef struct {
     Param *editingParam;
 } MMState;
 
-void drawMainMenu(void);
+void drawMainMenu(MMState *state, bool sec);
 
 #endif //KINCALC_MAIN_MENU_H

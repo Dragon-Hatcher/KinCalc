@@ -6,6 +6,7 @@
 
 #include <string.h>
 #include "menu.h"
+#include "call_ti_basic.h"
 
 static Variable *chooseVar(AllEqs *eqs, Variable *except) {
     int varCount = eqs->accs->count * 5 + eqs->vels->count * 3 + eqs->velSums->count * 2 + eqs->freeVars->count;
@@ -88,12 +89,10 @@ void newParam(Param *param, MMState *state) {
     if (choiceNum == -1) return;
 
     ParamType choice = (ParamType)choiceNum;
+    param->type = choice;
     state->editingParam = param;
-    state->editingParamType = choice;
 
     Variable *defVar = varForParam(state->eqs, param);
-
-    param->type = choice;
 
     if (choice == CONSTANT) {
         param->var = defVar;
@@ -107,4 +106,8 @@ void newParam(Param *param, MMState *state) {
     if (choice == VAR || choice == OFFSET) param->coeff = os_FloatToReal(1.0f);
 
     if (choice == VAR || choice == COEFF) param->offset = os_FloatToReal(0.0f);
+
+    if (choice == CONSTANT || choice == OFFSET) tiBasicB(state);
+    if (choice == COEFF) tiBasicA(state);
+    if (choice == LINEAR) tiBasicAAndB(state);
 }
