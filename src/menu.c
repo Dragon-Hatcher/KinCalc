@@ -8,28 +8,36 @@
 #include "bottom_menu.h"
 #include "draw_simple_text.h"
 
+#define ROWS 10
+
+static void redraw(const char *items[], int length, int offset, int select) {
+    for (int row = 0, item = offset; row < 10 && item < length ; row++, item++) {
+        drawAtCharPos(1, row + 1, items[item]);
+        drawAtCharPos(0, row + 1, select == item ? "\x0F" : " ");
+    }
+}
+
 int menu(const char* title, const char *items[], int length) {
     gfx_FillScreen(0xFF);
 
     bottomMenu(3, 2, "CANCEL");
 
     drawAtCharPos(0, 0, title);
-    for (int i = 0; i < length; i++) {
-        drawAtCharPos(1, i + 1, items[i]);
-    }
 
     int selectedItem = 0;
-    drawAtCharPos(0, selectedItem + 1, "\x0F");
+    int scroll = 0;
+    redraw(items, length, scroll, selectedItem);
+
     sk_key_t key = os_GetCSC();
     while (key != sk_Enter && key != sk_Graph && key != sk_Trace) {
-        if (key == sk_Up) {
-            drawAtCharPos(0, selectedItem-- + 1, " ");
-            if (selectedItem < 0) selectedItem = length - 1;
-            drawAtCharPos(0, selectedItem + 1, "\x0F");
-        } else if (key == sk_Down) {
-            drawAtCharPos(0, selectedItem++ + 1, " ");
-            if (selectedItem == length) selectedItem = 0;
-            drawAtCharPos(0, selectedItem + 1, "\x0F");
+        if (key == sk_Up && selectedItem != 0) {
+            selectedItem--;
+            if (selectedItem < scroll) scroll = selectedItem;
+            redraw(items, length, scroll, selectedItem);
+        } else if (key == sk_Down && selectedItem != length - 1) {
+            selectedItem++;
+            if (selectedItem >= scroll + ROWS) scroll++;
+            redraw(items, length, scroll, selectedItem);
         }
         key = os_GetCSC();
     }
