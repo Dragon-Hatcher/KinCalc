@@ -8,12 +8,15 @@
 #include "mm_eqs.h"
 
 typedef struct {
-    AllEqs *eqs;
+    AllEqs eqs;
     int selectedRow;
     int scroll;
-    Param *editingParam;
+    /**
+     * -1 for none;
+     */
+    int editingVar;
 } MMState;
 
-void drawMainMenu(MMState *state, bool sec);
+void drawMainMenu(MMState *state);
 
 #endif //KINCALC_MAIN_MENU_H

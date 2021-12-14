@@ -11,6 +11,10 @@
 #include "draw_simple_text.h"
 #include "mm_eqs.h"
 
+static LinearEq EMPTY_EQ = (LinearEq) {
+    .determined = false
+};
+
 static int newEqType(void) {
     char *eqTypes[4];
     eqTypes[0] = "Constant Acceleration";
@@ -27,48 +31,47 @@ static void getName(char nameOut[NAME_SIZE]) {
 }
 
 static void addConstAcc(AllEqs *eqs, const char name[NAME_SIZE]) {
-    if (eqs->accs->count == CONST_ACC_COUNT) return;
-    ConstAcc newAcc = {
-            .dx = emptyParamValue(),
-            .dt = emptyParamValue(),
-            .v0 = emptyParamValue(),
-            .v = emptyParamValue(),
-            .a = emptyParamValue()
-    };
-    strcpy(newAcc.name, name);
-    eqs->accs->accs[eqs->accs->count] = newAcc;
-    eqs->accs->count++;
+    if (eqs->accCount == ACC_VAR_COUNT) return;
+    strcpy(eqs->accNames[eqs->accCount], name);
+
+    *eqForField(eqs, ACC, eqs->accCount, DX) = EMPTY_EQ;
+    *eqForField(eqs, ACC, eqs->accCount, DT) = EMPTY_EQ;
+    *eqForField(eqs, ACC, eqs->accCount, V0) = EMPTY_EQ;
+    *eqForField(eqs, ACC, eqs->accCount, ACC_V) = EMPTY_EQ;
+    *eqForField(eqs, ACC, eqs->accCount, A) = EMPTY_EQ;
+
+    eqs->accCount++;
 }
 
 static void addConstVel(AllEqs *eqs, const char name[NAME_SIZE]) {
-    if (eqs->vels->count == CONST_VEL_COUNT) return;
-    ConstVel newVel = {
-            .dx = emptyParamValue(),
-            .dt = emptyParamValue(),
-            .v = emptyParamValue()
-    };
-    strcpy(newVel.name, name);
-    eqs->vels->vels[eqs->vels->count] = newVel;
-    eqs->vels->count++;
+    if (eqs->velCount == VEL_VAR_COUNT) return;
+    strcpy(eqs->velNames[eqs->velCount], name);
+
+    *eqForField(eqs, VEL, eqs->velCount, DX) = EMPTY_EQ;
+    *eqForField(eqs, VEL, eqs->velCount, DT) = EMPTY_EQ;
+    *eqForField(eqs, VEL, eqs->velCount, VEL_V) = EMPTY_EQ;
+
+    eqs->velCount++;
 }
 
 static void addVelSum(AllEqs *eqs, const char name[NAME_SIZE]) {
-    if (eqs->velSums->count == VEL_SUM_COUNT) return;
-    VelSum newSum = {
-            .x = emptyParamValue(),
-            .y = emptyParamValue()
-    };
-    strcpy(newSum.name, name);
-    eqs->velSums->sums[eqs->velSums->count] = newSum;
-    eqs->velSums->count++;
+    if (eqs->velSumCount == VEL_SUM_VAR_COUNT) return;
+    strcpy(eqs->velSumNames[eqs->velSumCount], name);
+
+    *eqForField(eqs, VEL_SUM, eqs->velCount, VEL_V) = EMPTY_EQ;
+    *eqForField(eqs, VEL_SUM, eqs->velCount, VX) = EMPTY_EQ;
+    *eqForField(eqs, VEL_SUM, eqs->velCount, VY) = EMPTY_EQ;
+
+    eqs->velSumCount++;
 }
 
 static void addFreeVar(AllEqs *eqs, const char name[NAME_SIZE]) {
-    if (eqs->freeVars->count == FREE_VAR_COUNT) return;
-    FreeVar newVar;
-    strcpy(newVar.name, name);
-    eqs->freeVars->vars[eqs->freeVars->count] = newVar;
-    eqs->freeVars->count++;
+    if (eqs->velSumCount == FREE_VAR_VAR_COUNT) return;
+    strcpy(eqs->freeVarNames[eqs->velSumCount], name);
+
+    *eqForField(eqs, FREE_VAR, eqs->freeVarCount, VAR) = EMPTY_EQ;
+
+    eqs->freeVarCount++;
 }
 
 void newEq(AllEqs *eqs) {
@@ -80,13 +83,13 @@ void newEq(AllEqs *eqs) {
     getName(name);
 
     switch (choice) {
-        case CONSTANT_ACCEL:
+        case ACC:
             addConstAcc(eqs, name);
             break;
-        case CONSTANT_VEL:
+        case VEL:
             addConstVel(eqs, name);
             break;
-        case VELOCITY_SUM:
+        case VEL_SUM:
             addVelSum(eqs, name);
             break;
         case FREE_VAR:

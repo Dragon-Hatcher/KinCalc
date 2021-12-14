@@ -7,112 +7,66 @@
 
 #include <tice.h>
 
-typedef enum {
-    CONSTANT_ACCEL = 0, CONSTANT_VEL, VELOCITY_SUM, FREE_VAR
-} EqType;
-
 typedef struct {
-    EqType type;
-    int eqNum;
-    int eqField;
     bool determined;
-    real_t value;
-} Variable;
-
-typedef enum {
-    CONSTANT, VAR, COEFF, OFFSET, LINEAR, NONE
-} ParamType;
-
-typedef struct {
-    ParamType type;
     real_t coeff;
-    Variable *var;
-    real_t offset;
-} Param;
+    int varNum;
+    real_t intercept;
+} LinearEq;
 
 #define NAME_CHAR_COUNT 2
 #define NAME_SIZE (NAME_CHAR_COUNT + 1)
 
-// Const Acceleration --------------------------------------------------------------------------------------------------
+typedef char Name[NAME_SIZE];
+
+typedef enum EqType {
+    ACC = 0, VEL, VEL_SUM, FREE_VAR
+} EqType;
+
+typedef enum {
+    DX = 0, DT = 1, V0 = 2, ACC_V = 3, A = 4,
+    VEL_V = 2,
+    SUM_V = 0, VX = 1, VY = 2,
+    VAR = 0
+} Field;
+
+#define ACC_VAR_COUNT 10
+#define VEL_VAR_COUNT 10
+#define VEL_SUM_VAR_COUNT 5
+#define FREE_VAR_VAR_COUNT 5
+
+#define ACC_FIELD_COUNT 5
+#define VEL_FIELD_COUNT 3
+#define VEL_SUM_FIELD_COUNT 3
+#define FREE_VAR_FIELD_COUNT 1
+
+#define ACC_TOT_VAR_COUNT (ACC_VAR_COUNT * ACC_FIELD_COUNT)
+#define VEL_TOT_VAR_COUNT (VEL_VAR_COUNT * VEL_FIELD_COUNT)
+#define VEL_SUM_TOT_VAR_COUNT (VEL_SUM_VAR_COUNT * VEL_SUM_FIELD_COUNT)
+#define FREE_VAR_TOT_VAR_COUNT (FREE_VAR_VAR_COUNT * FREE_VAR_FIELD_COUNT)
+
+static int fieldCounts[] = {ACC_FIELD_COUNT, VEL_FIELD_COUNT, VEL_SUM_FIELD_COUNT, FREE_VAR_FIELD_COUNT};
+
+static int varStartOffset[] = {
+        0,
+        ACC_TOT_VAR_COUNT,
+        ACC_TOT_VAR_COUNT + VEL_TOT_VAR_COUNT,
+        ACC_TOT_VAR_COUNT + VEL_TOT_VAR_COUNT + VEL_SUM_TOT_VAR_COUNT};
+
+#define VARIABLE_COUNT (ACC_TOT_VAR_COUNT + VEL_TOT_VAR_COUNT + VEL_SUM_TOT_VAR_COUNT + FREE_VAR_TOT_VAR_COUNT)
 
 typedef struct {
-    char name[NAME_SIZE];
-    Param dx;
-    Param dt;
-    Param v0;
-    Param v;
-    Param a;
-} ConstAcc;
-
-#define CONST_ACC_COUNT 10
-
-typedef struct {
-    int count;
-    ConstAcc accs[CONST_ACC_COUNT];
-} ConstAccs;
-
-// Const Vel -----------------------------------------------------------------------------------------------------------
-
-typedef struct {
-    char name[NAME_SIZE];
-    Param dx;
-    Param dt;
-    Param v;
-} ConstVel;
-
-#define CONST_VEL_COUNT 10
-
-typedef struct {
-    int count;
-    ConstVel vels[CONST_VEL_COUNT];
-} ConstVels;
-
-// Vel Sums ------------------------------------------------------------------------------------------------------------
-
-typedef struct {
-    char name[NAME_SIZE];
-    Param x;
-    Param y;
-} VelSum;
-
-#define VEL_SUM_COUNT 5
-
-typedef struct {
-    int count;
-    VelSum sums[VEL_SUM_COUNT];
-} VelSums;
-
-// Free Vars -----------------------------------------------------------------------------------------------------------
-
-typedef struct {
-    char name[NAME_SIZE];
-    Variable *var;
-} FreeVar;
-
-#define FREE_VAR_COUNT 5
-
-typedef struct {
-    int count;
-    FreeVar vars[FREE_VAR_COUNT];
-} FreeVars;
-
-#define VARIABLE_COUNT (CONST_ACC_COUNT * 5 + CONST_VEL_COUNT * 3 + VEL_SUM_COUNT * 2 + FREE_VAR_COUNT)
-
-typedef struct {
-    Variable variables[VARIABLE_COUNT];
-} Vars;
-
-typedef struct {
-    ConstAccs *accs;
-    ConstVels *vels;
-    VelSums *velSums;
-    FreeVars *freeVars;
-    Vars *vars;
+    LinearEq variables[VARIABLE_COUNT];
+    uint8_t accCount;
+    Name accNames[ACC_VAR_COUNT];
+    uint8_t velCount;
+    Name velNames[VEL_VAR_COUNT];
+    uint8_t velSumCount;
+    Name velSumNames[VEL_SUM_VAR_COUNT];
+    uint8_t freeVarCount;
+    Name freeVarNames[FREE_VAR_VAR_COUNT];
 } AllEqs;
 
-Param emptyParamValue(void);
-
-Variable *varForParam(AllEqs *eqs, Param *param);
-Variable *varForTypeAndNum(AllEqs *eqs, EqType type, int eqNum, int varNum);
+LinearEq *eqForField(AllEqs *eqs, EqType eqType, int eqNum, Field field);
 
 #endif //KINCALC_MM_EQS_H

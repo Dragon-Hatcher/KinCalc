@@ -10,6 +10,6 @@
 
 #define PROGRAM_STATE_APP_VAR_NAME "DLNNP"
 
-MMState *initMMState(ti_var_t stateVar);
+//MMState *initMMState(ti_var_t stateVar);
 
 #endif //KINCALC_PRG_STATE_IN_APPVAR_H

@@ -13,147 +13,151 @@
 
 static void solve(void) {}
 
-#define SCREEN_LINES 10
-#define INC_ROW(x) do {                          \
-    if (rowsPassed >= state->scroll) {           \
-        x;                                       \
-        if(++drawRow > SCREEN_LINES) return;     \
-    }                                            \
-    rowsPassed++;                                \
-} while(0);
+#define CURSOR_CHAR "\x0F"
+#define EMPTY_ROW "                          "
 
-static void printRow(int indent, int row, char *str, bool isSelectedRow) {
-    drawAtCharPos(indent + 1, row, str);
-    if (isSelectedRow) drawAtCharPos(indent, row, "\x0F");
+#define SCREEN_LINES 10
+
+#define ACC_ROWS 6
+#define VEL_ROWS 4
+#define VEL_SUM_ROWS 3
+#define FREE_VAR_ROWS 1
+
+static int rowCount(AllEqs *eqs) {
+    return eqs->accCount * ACC_ROWS + eqs->velCount * VEL_ROWS + eqs->velSumCount * VEL_SUM_ROWS +
+           eqs->freeVarCount * FREE_VAR_ROWS;
 }
 
-static void redraw(MMState *state) {
-    gfx_FillScreen(0xFF);
+static void drawCursor(MMState *state, const char *cursorChar) {
+    if (state->selectedRow >= rowCount(&state->eqs)) return;
+
+    int screenRow = state->selectedRow - state->scroll;
+    bool isIndented;
+
+    {
+        int selectedRow = state->selectedRow;
+        if (selectedRow < state->eqs.freeVarCount * FREE_VAR_ROWS) {
+            isIndented = false;
+        } else {
+            selectedRow -= state->eqs.freeVarCount * FREE_VAR_ROWS;
+            if (selectedRow < state->eqs.velSumCount * VEL_SUM_ROWS) {
+                isIndented = selectedRow % VEL_SUM_ROWS != 0;
+            } else {
+                selectedRow -= state->eqs.freeVarCount * VEL_SUM_ROWS;
+                if (selectedRow < state->eqs.velCount * VEL_ROWS) {
+                    isIndented = selectedRow % VEL_ROWS != 0;
+                } else {
+                    selectedRow -= state->eqs.velCount * VEL_ROWS;
+                    isIndented = selectedRow % ACC_ROWS != 0;
+                }
+            }
+        }
+    }
+
+    drawAtCharPos(isIndented ? 1 : 0, screenRow, cursorChar);
+}
+
+#define DRAW_ROW(S) do {                   \
+    if (screenRow > SCREEN_LINES) break;   \
+    if (rowsPassed++ >= state->scroll) {   \
+        drawAtCharPos(1, screenRow++, S);  \
+    }                                      \
+} while (0);
+
+static void drawRows(MMState *state) {
+    for (int i = 0; i < SCREEN_LINES; i++) {
+        drawAtCharPos(0, i, EMPTY_ROW);
+    }
+
+    int screenRow = 0;
+    int rowsPassed = 0;
+
+    for (int i = 0; i < state->eqs.freeVarCount; i++) {
+        DRAW_ROW(state->eqs.freeVarNames[i])
+    }
+    for (int i = 0; i < state->eqs.velSumCount; i++) {
+        DRAW_ROW(state->eqs.velSumNames[i])
+        DRAW_ROW(" vx")
+        DRAW_ROW(" vy")
+    }
+    for (int i = 0; i < state->eqs.velCount; i++) {
+        DRAW_ROW(state->eqs.velNames[i])
+        DRAW_ROW(" \x16x")
+        DRAW_ROW(" \x16t")
+        DRAW_ROW(" v ")
+    }
+    for (int i = 0; i < state->eqs.accCount; i++) {
+        DRAW_ROW(state->eqs.accNames[i])
+        DRAW_ROW(" \x16x")
+        DRAW_ROW(" \x16t")
+        DRAW_ROW(" v0")
+        DRAW_ROW(" v ")
+        DRAW_ROW(" a ")
+    }
+}
+
+static void drawMenus() {
     bottomMenu(0, 1, "QUIT");
     bottomMenu(1, 2, "NEW EQ");
     bottomMenu(3, 2, "SOLVE");
-
-    AllEqs *eqs = state->eqs;
-    int selectedRow = state->selectedRow;
-    int rowsPassed = 0;
-    int drawRow = 0;
-    for (int i = 0; i < eqs->freeVars->count; i++) {
-        INC_ROW(printRow(0, drawRow, eqs->freeVars->vars[i].name, rowsPassed == selectedRow));
-    }
-    for (int i = 0; i < eqs->velSums->count; i++) {
-        VelSum velSum = eqs->velSums->sums[i];
-        INC_ROW(printRow(0, drawRow, velSum.name, rowsPassed == selectedRow));
-        INC_ROW(printRow(1, drawRow, "x: ", rowsPassed == selectedRow));
-        INC_ROW(printRow(1, drawRow, "y: ", rowsPassed == selectedRow));
-    }
-    for (int i = 0; i < eqs->vels->count; i++) {
-        ConstVel vel = eqs->vels->vels[i];
-        INC_ROW(printRow(0, drawRow, vel.name, rowsPassed == selectedRow));
-        INC_ROW(printRow(1, drawRow, "\x16x: ", rowsPassed == selectedRow));
-        INC_ROW(printRow(1, drawRow, "\x16t: ", rowsPassed == selectedRow));
-        INC_ROW(printRow(1, drawRow, "v: ", rowsPassed == selectedRow));
-    }
-    for (int i = 0; i < eqs->accs->count; i++) {
-        ConstAcc acc = eqs->accs->accs[i];
-        INC_ROW(printRow(0, drawRow, acc.name, rowsPassed == selectedRow));
-        INC_ROW(printRow(1, drawRow, "\x16x: ", rowsPassed == selectedRow));
-        INC_ROW(printRow(1, drawRow, "\x16t: ", rowsPassed == selectedRow));
-        INC_ROW(printRow(1, drawRow, "v0: ", rowsPassed == selectedRow));
-        INC_ROW(printRow(1, drawRow, "v: ", rowsPassed == selectedRow));
-        INC_ROW(printRow(1, drawRow, "a: ", rowsPassed == selectedRow));
-    }
 }
 
-static int rowCount(AllEqs *eqs) {
-    return eqs->accs->count * 6 + eqs->vels->count * 4 + eqs->velSums->count * 3 + eqs->freeVars->count;
+static void fullRedraw(MMState *state) {
+    state->scroll = 0;
+    state->selectedRow = 0;
+    gfx_FillScreen(0xFF);
+    drawMenus();
+    drawRows(state);
+    drawCursor(state, CURSOR_CHAR);
 }
 
-static void fixScroll(MMState *state) {
-    if (state->selectedRow < state->scroll) state->scroll = state->selectedRow;
-    if (state->selectedRow > (state->scroll + SCREEN_LINES)) state->scroll = state->selectedRow - SCREEN_LINES;
-}
-
-#define DO_NEW_PARAM(x) do { \
-    newParam(x, state);      \
-    return true;             \
-} while(0);
-
-static bool checkForNewParam(MMState *state) {
-    AllEqs *eqs = state->eqs;
-    int row = state->selectedRow;
-    if (row >= eqs->freeVars->count) row -= eqs->freeVars->count;
-    for (int i = 0; i < eqs->velSums->count; i++) {
-        if (row >= 3) {
-            row -= 3;
-            continue;
-        } else {
-            if (row == 0) return false;
-            if (row == 1) DO_NEW_PARAM(&eqs->velSums->sums[i].x)
-            if (row == 2) DO_NEW_PARAM(&eqs->velSums->sums[i].y)
-        }
+static bool fixScroll(MMState *state) {
+    if (state->selectedRow < state->scroll) {
+        state->scroll = state->selectedRow;
+        return true;
     }
-    for (int i = 0; i < eqs->vels->count; i++) {
-        if (row >= 4) {
-            row -= 4;
-            continue;
-        } else {
-            if (row == 0) return false;
-            if (row == 1) DO_NEW_PARAM(&eqs->vels->vels[i].dx)
-            if (row == 2) DO_NEW_PARAM(&eqs->vels->vels[i].dt)
-            if (row == 3) DO_NEW_PARAM(&eqs->vels->vels[i].v)
-        }
-    }
-    for (int i = 0; i < eqs->accs->count; i++) {
-        if (row >= 6) {
-            row -= 6;
-            continue;
-        } else {
-            if (row == 0) return false;
-            if (row == 1) DO_NEW_PARAM(&eqs->accs->accs[i].dx)
-            if (row == 2) DO_NEW_PARAM(&eqs->accs->accs[i].dt)
-            if (row == 3) DO_NEW_PARAM(&eqs->accs->accs[i].v0)
-            if (row == 4) DO_NEW_PARAM(&eqs->accs->accs[i].v)
-            if (row == 5) DO_NEW_PARAM(&eqs->accs->accs[i].a)
-        }
+    if (state->selectedRow > (state->scroll + SCREEN_LINES)) {
+        state->scroll = state->selectedRow - SCREEN_LINES;
+        return true;
     }
     return false;
 }
 
-void drawMainMenu(MMState *state, bool sec) {
-    state->scroll = 0;
-    state->selectedRow = 0;
-    redraw(state);
+static void doScroll(MMState *state, bool up) {
+    if (up && state->selectedRow != 0) {
+        drawCursor(state, " ");
+        state->selectedRow--;
+        if (fixScroll(state)) drawRows(state);
+        drawCursor(state, CURSOR_CHAR);
+    } else if (!up && state->selectedRow != rowCount(&state->eqs) - 1) {
+        drawCursor(state, " ");
+        state->selectedRow++;
+        if (fixScroll(state)) drawRows(state);
+        drawCursor(state, CURSOR_CHAR);
+    }
+}
 
-    if (sec) return;
+void drawMainMenu(MMState *state) {
+    fullRedraw(state);
 
     do {
         sk_key_t key = os_GetCSC();
         if (key == sk_Yequ) break;
         if (key == sk_Window || key == sk_Zoom) {
-            newEq(state->eqs);
-            state->scroll = 0;
-            state->selectedRow = 0;
-            redraw(state);
+            newEq(&state->eqs);
+            fullRedraw(state);
         }
         if (key == sk_Trace || key == sk_Graph) {
             solve();
-            state->scroll = 0;
             state->selectedRow = 0;
-            redraw(state);
+            fullRedraw(state);
         }
-        if (key == sk_Up && state->selectedRow != 0) {
-            state->selectedRow--;
-            fixScroll(state);
-            redraw(state);
-        }
-        if (key == sk_Down && state->selectedRow != rowCount(state->eqs) - 1) {
-            state->selectedRow++;
-            fixScroll(state);
-            redraw(state);
-        }
-        if (key == sk_Enter) {
-            if (checkForNewParam(state)) {}
-            redraw(state);
-        }
+        if (key == sk_Up) doScroll(state, true);
+        if (key == sk_Down) doScroll(state, false);
+
+//        if (key == sk_Enter) {
+//            if (checkForNewParam(state)) {}
+//            redraw(state);
+//        }
     } while (true);
 }

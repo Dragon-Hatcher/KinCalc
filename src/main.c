@@ -20,13 +20,25 @@
 int main(void) {
     gfx_Begin();
 
-    if(initFont()) EXIT_ERROR("Missing font OSLFONT.");
-    ti_var_t stateVar = ti_Open(PROGRAM_STATE_APP_VAR_NAME, "w");
-    if(!stateVar) EXIT_ERROR("Could not open appvar");
-    MMState *state = initMMState(stateVar);
-    ti_Close(stateVar);
+    if (initFont()) EXIT_ERROR("Missing font OSLFONT.");
+//    ti_var_t stateVar = ti_Open(PROGRAM_STATE_APP_VAR_NAME, "w");
+//    if(!stateVar) EXIT_ERROR("Could not open appvar");
+//    MMState *state = initMMState(stateVar);
+//    ti_Close(stateVar);
 
-    drawMainMenu(state, false);
+    static MMState state = {
+            .eqs = (AllEqs) {
+                    .accCount = 0,
+                    .velCount = 0,
+                    .velSumCount = 0,
+                    .freeVarCount = 0
+            },
+            .selectedRow = -1,
+            .scroll = 0,
+            .editingVar = -1
+    };
+
+    drawMainMenu(&state);
 
     gfx_End();
 }
