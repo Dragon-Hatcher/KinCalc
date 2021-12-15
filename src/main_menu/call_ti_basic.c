@@ -7,7 +7,6 @@
 #include <graphx.h>
 #include <fileioc.h>
 #include "init_font.h"
-#include "prg_state_in_appvar.h"
 #include <debug.h>
 
 static void loadA(MMState *state) {

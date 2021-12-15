@@ -5,6 +5,7 @@
 #ifndef KINCALC_MAIN_MENU_H
 #define KINCALC_MAIN_MENU_H
 
+#include <fileioc.h>
 #include "mm_eqs.h"
 
 typedef struct {
@@ -16,6 +17,8 @@ typedef struct {
      */
     int editingVar;
 } MMState;
+
+MMState *initMMState(ti_var_t file);
 
 void drawMainMenu(MMState *state);
 

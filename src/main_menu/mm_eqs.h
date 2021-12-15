@@ -78,6 +78,7 @@ typedef struct {
     Name freeVarNames[FREE_VAR_VAR_COUNT];
 } AllEqs;
 
+int eqNumForField(AllEqs *eqs, EqType eqType, int eqNum, Field field);
 VariableValue *eqForField(AllEqs *eqs, EqType eqType, int eqNum, Field field);
 
 #define DESCRIPTION_CHARS 17

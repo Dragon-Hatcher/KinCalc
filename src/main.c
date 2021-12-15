@@ -7,7 +7,8 @@
 #include <fileioc.h>
 #include "init_font.h"
 #include "main_menu/main_menu.h"
-#include "main_menu/prg_state_in_appvar.h"
+
+#define PROGRAM_STATE_APP_VAR_NAME "AJDBHC"
 
 #define EXIT_ERROR(str) do { \
     gfx_End();               \
@@ -21,24 +22,11 @@ int main(void) {
     gfx_Begin();
 
     if (initFont()) EXIT_ERROR("Missing font OSLFONT.");
-//    ti_var_t stateVar = ti_Open(PROGRAM_STATE_APP_VAR_NAME, "w");
-//    if(!stateVar) EXIT_ERROR("Could not open appvar");
-//    MMState *state = initMMState(stateVar);
-//    ti_Close(stateVar);
+    ti_var_t stateVar = ti_Open(PROGRAM_STATE_APP_VAR_NAME, "w");
+    if(!stateVar) EXIT_ERROR("Could not open appvar");
+    MMState *state = initMMState(stateVar);
+    drawMainMenu(state);
 
-    static MMState state = {
-            .eqs = (AllEqs) {
-                    .accCount = 0,
-                    .velCount = 0,
-                    .velSumCount = 0,
-                    .freeVarCount = 0
-            },
-            .selectedRow = -1,
-            .scroll = 0,
-            .editingVar = -1
-    };
-
-    drawMainMenu(&state);
-
+    ti_Close(stateVar);
     gfx_End();
 }

@@ -2,13 +2,13 @@
 // Created by danie on 12/12/2021.
 //
 
-#include "new_param.h"
+#include "new_variable_value.h"
 
 #include <string.h>
 #include "menu.h"
 #include "call_ti_basic.h"
 
-//static Variable *chooseVar(AllEqs *eqs, Variable *except) {
+static int chooseVar(AllEqs *eqs, int except) {
 //    int varCount = eqs->accs->count * 5 + eqs->vels->count * 3 + eqs->velSums->count * 2 + eqs->freeVars->count;
 //    int varNum = 0;
 //    char strs[varCount][NAME_SIZE + 3];
@@ -75,39 +75,37 @@
 //        if (choice-- == 0) return varForTypeAndNum(eqs, CONSTANT_ACCEL, i, 4);
 //    }
 //    return NULL;
-//}
-//
-//void newParam(Param *param, MMState *state) {
-//    char *eqs[5];
-//    eqs[0] = "b";
-//    eqs[1] = "x";
-//    eqs[2] = "ax";
-//    eqs[3] = "x + b";
-//    eqs[4] = "ax + b";
-//
-//    int choiceNum = menu("Value Type:", (const char **) eqs, 5);
-//    if (choiceNum == -1) return;
-//
-//    ParamType choice = (ParamType)choiceNum;
-//    param->type = choice;
-//    state->editingParam = param;
-//
-//    Variable *defVar = varForParam(state->eqs, param);
-//
-//    if (choice == CONSTANT) {
-//        param->var = defVar;
-//    } else {
-//        Variable *var = chooseVar(state->eqs, defVar);
-//        if (var == NULL) return;
-//        param->var = var;
-//    }
-//
-//    if (choice == CONSTANT) param->coeff = os_FloatToReal(0.0f);
-//    if (choice == VAR || choice == OFFSET) param->coeff = os_FloatToReal(1.0f);
-//
-//    if (choice == VAR || choice == COEFF) param->offset = os_FloatToReal(0.0f);
-//
-//    if (choice == CONSTANT || choice == OFFSET) tiBasicB(state);
-//    if (choice == COEFF) tiBasicA(state);
-//    if (choice == LINEAR) tiBasicAAndB(state);
-//}
+}
+
+void newVariableValue(MMState *state, int varNumber) {
+    char *eqOptions[5];
+    eqOptions[0] = "b";
+    eqOptions[1] = "x";
+    eqOptions[2] = "ax";
+    eqOptions[3] = "x + b";
+    eqOptions[4] = "ax + b";
+
+    int choiceNum = menu("Value Type:", (const char **) eqOptions, 5);
+    if (choiceNum == -1) return;
+
+    VariableValue *var = &state->eqs.variables[varNumber];
+    state->editingVar = varNumber;
+
+    if (choiceNum == 0) {
+        var->status = CONSTANT;
+        tiBasicB(state);
+    } else {
+        int termVar = chooseVar(&state->eqs, varNumber);
+        if (termVar == -1) return;
+
+        var->status = VARIABLE;
+        LinearEq *varEq = &var->eq;
+
+        if (choiceNum == 1 || choiceNum == 2) varEq->intercept = os_FloatToReal(0.0f);
+        if (choiceNum == 1 || choiceNum == 3) varEq->coeff = os_FloatToReal(1.0f);
+
+        if (choiceNum == 2) tiBasicA(state);
+        if (choiceNum == 3) tiBasicB(state);
+        if (choiceNum == 4) tiBasicAAndB(state);
+    }
+}

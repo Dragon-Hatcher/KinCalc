@@ -4,8 +4,12 @@
 
 #include "mm_eqs.h"
 
+int eqNumForField(AllEqs *eqs, EqType eqType, int eqNum, Field field) {
+    return varStartOffset[eqType] + eqNum * fieldCounts[eqType] + field;
+}
+
 VariableValue *eqForField(AllEqs *eqs, EqType eqType, int eqNum, Field field) {
-    return &eqs->variables[varStartOffset[eqType] + eqNum * fieldCounts[eqType] + field];
+    return &eqs->variables[eqNumForField(eqs, eqType, eqNum, field)];
 }
 
 void variableDescription(AllEqs *eqs, VariableValue *var, char output[DESCRIPTION_SIZE]) {

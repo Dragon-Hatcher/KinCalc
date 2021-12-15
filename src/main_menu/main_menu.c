@@ -6,10 +6,11 @@
 
 #include <tice.h>
 #include <graphx.h>
+#include <fileioc.h>
 #include "bottom_menu.h"
 #include "new_eq.h"
 #include "draw_simple_text.h"
-#include "new_param.h"
+#include "new_variable_value.h"
 
 static void solve(void) {}
 
@@ -43,7 +44,7 @@ static void drawCursor(MMState *state, const char *cursorChar) {
             if (selectedRow < state->eqs.velSumCount * VEL_SUM_ROWS) {
                 isIndented = selectedRow % VEL_SUM_ROWS != 0;
             } else {
-                selectedRow -= state->eqs.freeVarCount * VEL_SUM_ROWS;
+                selectedRow -= state->eqs.velSumCount * VEL_SUM_ROWS;
                 if (selectedRow < state->eqs.velCount * VEL_ROWS) {
                     isIndented = selectedRow % VEL_ROWS != 0;
                 } else {
@@ -148,6 +149,47 @@ static void doScroll(MMState *state, bool up) {
     }
 }
 
+static bool executeNewVariableValue(MMState *state) {
+    int row = state->selectedRow;
+    if (row < state->eqs.freeVarCount) {
+        newVariableValue(state, eqNumForField(&state->eqs, FREE_VAR, row, VAR));
+        return true;
+    }
+    row -= state->eqs.freeVarCount;
+    if (row < state->eqs.velSumCount * VEL_SUM_ROWS) {
+        newVariableValue(state, eqNumForField(&state->eqs, VEL_SUM, row / VEL_SUM_ROWS, row % VEL_SUM_ROWS));
+        return true;
+    }
+    row -= state->eqs.velSumCount * VEL_SUM_ROWS;
+    if (row < state->eqs.velCount * VEL_ROWS) {
+        if (row % VEL_ROWS == 0) return false;
+        newVariableValue(state, eqNumForField(&state->eqs, VEL, row / VEL_ROWS, row % VEL_ROWS + 1));
+    }
+    row -= state->eqs.velCount * VEL_ROWS;
+    if (row % ACC_ROWS == 0) return false;
+    newVariableValue(state, eqNumForField(&state->eqs, ACC, row / ACC_ROWS, row % ACC_ROWS + 1));
+}
+
+MMState *initMMState(ti_var_t file) {
+    AllEqs eqs = {
+            .accCount = 0,
+            .velCount = 0,
+            .velSumCount = 0,
+            .freeVarCount = 0,
+    };
+    MMState state = {
+            .eqs = eqs,
+            .scroll = 0,
+            .selectedRow = 0,
+            .editingVar = -1
+    };
+
+    MMState *statePtr = ti_GetDataPtr(file);
+    ti_Write(&state, sizeof state, 1, file);
+
+    return statePtr;
+}
+
 void drawMainMenu(MMState *state) {
     fullRedraw(state);
 
@@ -166,9 +208,8 @@ void drawMainMenu(MMState *state) {
         if (key == sk_Up) doScroll(state, true);
         if (key == sk_Down) doScroll(state, false);
 
-//        if (key == sk_Enter) {
-//            if (checkForNewParam(state)) {}
-//            redraw(state);
-//        }
+        if (key == sk_Enter) {
+            if (executeNewVariableValue(state)) fullRedraw(state);
+        }
     } while (true);
 }
