@@ -64,6 +64,17 @@ static void drawCursor(MMState *state, const char *cursorChar) {
     }                                      \
 } while (0);
 
+#define DRAW_ROW_VALUE(S, T, NUM, F) do {                                               \
+    if (screenRow > SCREEN_LINES) break;                                                \
+    if (rowsPassed++ >= state->scroll) {                                                \
+        drawAtCharPos(1, screenRow, S);                                                 \
+        drawAtCharPos(5, screenRow, "=");                                               \
+        char buffer[DESCRIPTION_SIZE];                                                  \
+        variableDescription(&state->eqs, eqForField(&state->eqs, T, NUM, F), buffer);   \
+        drawAtCharPos(7, screenRow++, buffer);                                          \
+    }                                                                                   \
+} while (0);
+
 static void drawRows(MMState *state) {
     for (int i = 0; i < SCREEN_LINES; i++) {
         drawAtCharPos(0, i, EMPTY_ROW);
@@ -73,26 +84,26 @@ static void drawRows(MMState *state) {
     int rowsPassed = 0;
 
     for (int i = 0; i < state->eqs.freeVarCount; i++) {
-        DRAW_ROW(state->eqs.freeVarNames[i])
+        DRAW_ROW_VALUE(state->eqs.freeVarNames[i], FREE_VAR, i, VAR)
     }
     for (int i = 0; i < state->eqs.velSumCount; i++) {
-        DRAW_ROW(state->eqs.velSumNames[i])
-        DRAW_ROW(" vx")
-        DRAW_ROW(" vy")
+        DRAW_ROW_VALUE(state->eqs.velSumNames[i], VEL, i, SUM_V)
+        DRAW_ROW_VALUE(" vx", VEL, i, VX)
+        DRAW_ROW_VALUE(" vy", VEL, i, VY)
     }
     for (int i = 0; i < state->eqs.velCount; i++) {
         DRAW_ROW(state->eqs.velNames[i])
-        DRAW_ROW(" \x16x")
-        DRAW_ROW(" \x16t")
-        DRAW_ROW(" v ")
+        DRAW_ROW_VALUE(" \x16x", VEL, i, DX)
+        DRAW_ROW_VALUE(" \x16t", VEL, i, DT)
+        DRAW_ROW_VALUE(" v", VEL, i, VEL_V)
     }
     for (int i = 0; i < state->eqs.accCount; i++) {
         DRAW_ROW(state->eqs.accNames[i])
-        DRAW_ROW(" \x16x")
-        DRAW_ROW(" \x16t")
-        DRAW_ROW(" v0")
-        DRAW_ROW(" v ")
-        DRAW_ROW(" a ")
+        DRAW_ROW_VALUE(" \x16x", ACC, i, DX)
+        DRAW_ROW_VALUE(" \x16t", ACC, i, DT)
+        DRAW_ROW_VALUE(" v0", ACC, i, V0)
+        DRAW_ROW_VALUE(" v", ACC, i, ACC_V)
+        DRAW_ROW_VALUE(" a", ACC, i, A)
     }
 }
 

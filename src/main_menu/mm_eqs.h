@@ -7,12 +7,23 @@
 
 #include <tice.h>
 
+typedef enum {
+    UNDETERMINED, CONSTANT, VARIABLE
+} VariableStatus;
+
 typedef struct {
-    bool determined;
     real_t coeff;
     int varNum;
     real_t intercept;
 } LinearEq;
+
+typedef struct {
+    VariableStatus status;
+    union {
+        LinearEq eq;
+        real_t value;
+    };
+} VariableValue;
 
 #define NAME_CHAR_COUNT 2
 #define NAME_SIZE (NAME_CHAR_COUNT + 1)
@@ -56,7 +67,7 @@ static int varStartOffset[] = {
 #define VARIABLE_COUNT (ACC_TOT_VAR_COUNT + VEL_TOT_VAR_COUNT + VEL_SUM_TOT_VAR_COUNT + FREE_VAR_TOT_VAR_COUNT)
 
 typedef struct {
-    LinearEq variables[VARIABLE_COUNT];
+    VariableValue variables[VARIABLE_COUNT];
     uint8_t accCount;
     Name accNames[ACC_VAR_COUNT];
     uint8_t velCount;
@@ -67,6 +78,11 @@ typedef struct {
     Name freeVarNames[FREE_VAR_VAR_COUNT];
 } AllEqs;
 
-LinearEq *eqForField(AllEqs *eqs, EqType eqType, int eqNum, Field field);
+VariableValue *eqForField(AllEqs *eqs, EqType eqType, int eqNum, Field field);
+
+#define DESCRIPTION_CHARS 17
+#define DESCRIPTION_SIZE (DESCRIPTION_CHARS + 1)
+
+void variableDescription(AllEqs *eqs, VariableValue *var, char output[DESCRIPTION_SIZE]);
 
 #endif //KINCALC_MM_EQS_H

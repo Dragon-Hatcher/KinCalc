@@ -9,10 +9,9 @@
 #include <string.h>
 #include "menu.h"
 #include "draw_simple_text.h"
-#include "mm_eqs.h"
 
-static LinearEq EMPTY_EQ = (LinearEq) {
-    .determined = false
+static VariableValue EMPTY_EQ = (VariableValue) {
+    .status = UNDETERMINED
 };
 
 static int newEqType(void) {
