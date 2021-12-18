@@ -164,10 +164,12 @@ static bool executeNewVariableValue(MMState *state) {
     if (row < state->eqs.velCount * VEL_ROWS) {
         if (row % VEL_ROWS == 0) return false;
         newVariableValue(state, eqNumForField(&state->eqs, VEL, row / VEL_ROWS, row % VEL_ROWS - 1));
+        return true;
     }
     row -= state->eqs.velCount * VEL_ROWS;
     if (row % ACC_ROWS == 0) return false;
     newVariableValue(state, eqNumForField(&state->eqs, ACC, row / ACC_ROWS, row % ACC_ROWS - 1));
+    return true;
 }
 
 MMState *initMMState(ti_var_t file) {
@@ -209,8 +211,7 @@ void drawMainMenu(MMState *state) {
         if (key == sk_Down) doScroll(state, false);
 
         if (key == sk_Enter) {
-            executeNewVariableValue(state);
-            fullRedraw(state);
+            if(executeNewVariableValue(state)) fullRedraw(state);
         }
     } while (true);
 }
