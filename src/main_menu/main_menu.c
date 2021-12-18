@@ -152,23 +152,23 @@ static void doScroll(MMState *state, bool up) {
 static bool executeNewVariableValue(MMState *state) {
     int row = state->selectedRow;
     if (row < state->eqs.freeVarCount) {
-        newVariableValue(state, eqNumForField(&state->eqs, FREE_VAR, row, VAR));
+        newVariableValue(state, eqNumForField(FREE_VAR, row, VAR));
         return true;
     }
     row -= state->eqs.freeVarCount;
     if (row < state->eqs.velSumCount * VEL_SUM_ROWS) {
-        newVariableValue(state, eqNumForField(&state->eqs, VEL_SUM, row / VEL_SUM_ROWS, row % VEL_SUM_ROWS));
+        newVariableValue(state, eqNumForField(VEL_SUM, row / VEL_SUM_ROWS, row % VEL_SUM_ROWS));
         return true;
     }
     row -= state->eqs.velSumCount * VEL_SUM_ROWS;
     if (row < state->eqs.velCount * VEL_ROWS) {
         if (row % VEL_ROWS == 0) return false;
-        newVariableValue(state, eqNumForField(&state->eqs, VEL, row / VEL_ROWS, row % VEL_ROWS - 1));
+        newVariableValue(state, eqNumForField(VEL, row / VEL_ROWS, row % VEL_ROWS - 1));
         return true;
     }
     row -= state->eqs.velCount * VEL_ROWS;
     if (row % ACC_ROWS == 0) return false;
-    newVariableValue(state, eqNumForField(&state->eqs, ACC, row / ACC_ROWS, row % ACC_ROWS - 1));
+    newVariableValue(state, eqNumForField(ACC, row / ACC_ROWS, row % ACC_ROWS - 1));
     return true;
 }
 

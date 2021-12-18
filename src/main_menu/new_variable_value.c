@@ -21,38 +21,38 @@ static int chooseVar(AllEqs *eqs, int except) {
 
     for (int i = 0; i < eqs->freeVarCount; i++) {
         strcat(strs[varNum], eqs->freeVarNames[i]);
-        assoc[varNum++] = eqNumForField(eqs, FREE_VAR, i, VAR);
+        assoc[varNum++] = eqNumForField(FREE_VAR, i, VAR);
     }
     for (int i = 0; i < eqs->velSumCount; i++) {
-        assoc[varNum] = eqNumForField(eqs, VEL_SUM, i, SUM_V);
+        assoc[varNum] = eqNumForField(VEL_SUM, i, SUM_V);
         strcat(strs[varNum], eqs->velSumNames[i]);
         strcat(strs[varNum++], "   ");
-        assoc[varNum] = eqNumForField(eqs, VEL_SUM, i, VX);
+        assoc[varNum] = eqNumForField(VEL_SUM, i, VX);
         strcat(strs[varNum++], "   vx");
-        assoc[varNum] = eqNumForField(eqs, VEL_SUM, i, VY);
+        assoc[varNum] = eqNumForField(VEL_SUM, i, VY);
         strcat(strs[varNum++], "   vy");
     }
     for (int i = 0; i < eqs->velCount; i++) {
-        assoc[varNum] = eqNumForField(eqs, VEL, i, DX);
+        assoc[varNum] = eqNumForField(VEL, i, DX);
         strcat(strs[varNum], eqs->velNames[i]);
         strcat(strs[varNum++],strlen(eqs->velNames[i]) == 1 ? ": \x16x" : ":\x16x");
-        assoc[varNum] = eqNumForField(eqs, VEL, i, DT);
+        assoc[varNum] = eqNumForField(VEL, i, DT);
         strcat(strs[varNum++], "   \x16t");
-        assoc[varNum] = eqNumForField(eqs, VEL, i, VEL_V);
+        assoc[varNum] = eqNumForField(VEL, i, VEL_V);
         strcat(strs[varNum++], "   v ");
     }
     for (int i = 0; i < eqs->accCount; i++) {
         strcat(strs[varNum], eqs->accNames[i]);
         strcat(strs[varNum],strlen(eqs->accNames[i]) == 1 ? ": " : ":");
-        assoc[varNum] = eqNumForField(eqs, ACC, i, DX);
+        assoc[varNum] = eqNumForField(ACC, i, DX);
         strcat(strs[varNum++], "\x16x");
-        assoc[varNum] = eqNumForField(eqs, ACC, i, DT);
+        assoc[varNum] = eqNumForField(ACC, i, DT);
         strcat(strs[varNum++], "   \x16t");
-        assoc[varNum] = eqNumForField(eqs, ACC, i, V0);
+        assoc[varNum] = eqNumForField(ACC, i, V0);
         strcat(strs[varNum++], "   v0");
-        assoc[varNum] = eqNumForField(eqs, ACC, i, ACC_V);
+        assoc[varNum] = eqNumForField(ACC, i, ACC_V);
         strcat(strs[varNum++], "   v ");
-        assoc[varNum] = eqNumForField(eqs, ACC, i, A);
+        assoc[varNum] = eqNumForField(ACC, i, A);
         strcat(strs[varNum++], "   a ");
     }
     char *options[varCount];

@@ -6,12 +6,12 @@
 
 #include "string.h"
 
-int eqNumForField(AllEqs *eqs, EqType eqType, int eqNum, Field field) {
+int eqNumForField(EqType eqType, int eqNum, Field field) {
     return varStartOffset[eqType] + eqNum * fieldCounts[eqType] + field;
 }
 
 VariableValue *eqForField(AllEqs *eqs, EqType eqType, int eqNum, Field field) {
-    return &eqs->variables[eqNumForField(eqs, eqType, eqNum, field)];
+    return &eqs->variables[eqNumForField(eqType, eqNum, field)];
 }
 
 static void fixString(char *str) {
