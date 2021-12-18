@@ -209,7 +209,8 @@ void drawMainMenu(MMState *state) {
         if (key == sk_Down) doScroll(state, false);
 
         if (key == sk_Enter) {
-            if (executeNewVariableValue(state)) fullRedraw(state);
+            executeNewVariableValue(state);
+            fullRedraw(state);
         }
     } while (true);
 }
