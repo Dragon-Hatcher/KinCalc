@@ -9,72 +9,60 @@
 #include "call_ti_basic.h"
 
 static int chooseVar(AllEqs *eqs, int except) {
-//    int varCount = eqs->accs->count * 5 + eqs->vels->count * 3 + eqs->velSums->count * 2 + eqs->freeVars->count;
-//    int varNum = 0;
-//    char strs[varCount][NAME_SIZE + 3];
-//    for (int i = 0; i < varCount; i++) {
-//        for (int j = 0; j < NAME_SIZE + 3; j++) {
-//            strs[i][j] = '\0';
-//        }
-//    }
-//
-//    for (int i = 0; i < eqs->freeVars->count; i++) {
-//        FreeVar var = eqs->freeVars->vars[i];
-//        strcat(strs[varNum++], var.name);
-//    }
-//    for (int i = 0; i < eqs->velSums->count; i++) {
-//        VelSum velSum = eqs->velSums->sums[i];
-//        strcat(strs[varNum], velSum.name);
-//        strcat(strs[varNum],strlen(velSum.name) == 1 ? ": " : ":");
-//        strcat(strs[varNum++], ":vx");
-//        strcat(strs[varNum++], "   vy");
-//    }
-//    for (int i = 0; i < eqs->vels->count; i++) {
-//        ConstVel vel = eqs->vels->vels[i];
-//        strcat(strs[varNum], vel.name);
-//        strcat(strs[varNum],strlen(vel.name) == 1 ? ": " : ":");
-//        strcat(strs[varNum++], ":\x16x");
-//        strcat(strs[varNum++], "   \x16t");
-//        strcat(strs[varNum++], "   v ");
-//    }
-//    for (int i = 0; i < eqs->accs->count; i++) {
-//        ConstAcc acc = eqs->accs->accs[i];
-//        strcat(strs[varNum], acc.name);
-//        strcat(strs[varNum],strlen(acc.name) == 1 ? ": " : ":");
-//        strcat(strs[varNum++], "\x16x");
-//        strcat(strs[varNum++], "   \x16t");
-//        strcat(strs[varNum++], "   v0");
-//        strcat(strs[varNum++], "   v ");
-//        strcat(strs[varNum++], "   a ");
-//    }
-//    char *options[varCount];
-//    for (int i = 0; i < varCount; i++) {
-//        options[i] = strs[i];
-//    }
-//
-//    int choice = menu("Choose a Variable:", (const char **) options, varCount);
-//    if (choice == -1) return NULL;
-//
-//    for (int i = 0; i < eqs->freeVars->count; i++) {
-//        if (choice-- == 0) return varForTypeAndNum(eqs, FREE_VAR, i, 0);
-//    }
-//    for (int i = 0; i < eqs->velSums->count; i++) {
-//        if (choice-- == 0) return varForTypeAndNum(eqs, VELOCITY_SUM, i, 0);
-//        if (choice-- == 0) return varForTypeAndNum(eqs, VELOCITY_SUM, i, 1);
-//    }
-//    for (int i = 0; i < eqs->vels->count; i++) {
-//        if (choice-- == 0) return varForTypeAndNum(eqs, CONSTANT_VEL, i, 0);
-//        if (choice-- == 0) return varForTypeAndNum(eqs, CONSTANT_VEL, i, 1);
-//        if (choice-- == 0) return varForTypeAndNum(eqs, CONSTANT_VEL, i, 2);
-//    }
-//    for (int i = 0; i < eqs->accs->count; i++) {
-//        if (choice-- == 0) return varForTypeAndNum(eqs, CONSTANT_ACCEL, i, 0);
-//        if (choice-- == 0) return varForTypeAndNum(eqs, CONSTANT_ACCEL, i, 1);
-//        if (choice-- == 0) return varForTypeAndNum(eqs, CONSTANT_ACCEL, i, 2);
-//        if (choice-- == 0) return varForTypeAndNum(eqs, CONSTANT_ACCEL, i, 3);
-//        if (choice-- == 0) return varForTypeAndNum(eqs, CONSTANT_ACCEL, i, 4);
-//    }
-//    return NULL;
+    int varCount = eqs->accCount * 5 + eqs->velCount * 3 + eqs->velSumCount * 3 + eqs->freeVarCount;
+    int varNum = 0;
+    char strs[varCount][NAME_SIZE + 3];
+    int assoc[varCount];
+    for (int i = 0; i < varCount; i++) {
+        for (int j = 0; j < NAME_SIZE + 3; j++) {
+            strs[i][j] = '\0';
+        }
+    }
+
+    for (int i = 0; i < eqs->freeVarCount; i++) {
+        strcat(strs[varNum], eqs->freeVarNames[i]);
+        assoc[varNum++] = eqNumForField(eqs, FREE_VAR, i, VAR);
+    }
+    for (int i = 0; i < eqs->velSumCount; i++) {
+        assoc[varNum] = eqNumForField(eqs, VEL_SUM, i, SUM_V);
+        strcat(strs[varNum], eqs->velSumNames[i]);
+        strcat(strs[varNum++], "   ");
+        assoc[varNum] = eqNumForField(eqs, VEL_SUM, i, VX);
+        strcat(strs[varNum++], "   vx");
+        assoc[varNum] = eqNumForField(eqs, VEL_SUM, i, VY);
+        strcat(strs[varNum++], "   vy");
+    }
+    for (int i = 0; i < eqs->velCount; i++) {
+        assoc[varNum] = eqNumForField(eqs, VEL, i, DX);
+        strcat(strs[varNum], eqs->velNames[i]);
+        strcat(strs[varNum++],strlen(eqs->velNames[i]) == 1 ? ": \x16x" : ":\x16x");
+        assoc[varNum] = eqNumForField(eqs, VEL, i, DT);
+        strcat(strs[varNum++], "   \x16t");
+        assoc[varNum] = eqNumForField(eqs, VEL, i, VEL_V);
+        strcat(strs[varNum++], "   v ");
+    }
+    for (int i = 0; i < eqs->accCount; i++) {
+        strcat(strs[varNum], eqs->accNames[i]);
+        strcat(strs[varNum],strlen(eqs->accNames[i]) == 1 ? ": " : ":");
+        assoc[varNum] = eqNumForField(eqs, ACC, i, DX);
+        strcat(strs[varNum++], "\x16x");
+        assoc[varNum] = eqNumForField(eqs, ACC, i, DT);
+        strcat(strs[varNum++], "   \x16t");
+        assoc[varNum] = eqNumForField(eqs, ACC, i, V0);
+        strcat(strs[varNum++], "   v0");
+        assoc[varNum] = eqNumForField(eqs, ACC, i, ACC_V);
+        strcat(strs[varNum++], "   v ");
+        assoc[varNum] = eqNumForField(eqs, ACC, i, A);
+        strcat(strs[varNum++], "   a ");
+    }
+    char *options[varCount];
+    for (int i = 0; i < varCount; i++) {
+        options[i] = strs[i];
+    }
+
+    int choice = menu("Choose a Variable:", (const char **) options, varCount);
+    if (choice == -1) return -1;
+    return assoc[choice];
 }
 
 void newVariableValue(MMState *state, int varNumber) {
@@ -100,6 +88,7 @@ void newVariableValue(MMState *state, int varNumber) {
 
         var->status = VARIABLE;
         LinearEq *varEq = &var->eq;
+        varEq->varNum = termVar;
 
         if (choiceNum == 1 || choiceNum == 2) varEq->intercept = os_FloatToReal(0.0f);
         if (choiceNum == 1 || choiceNum == 3) varEq->coeff = os_FloatToReal(1.0f);

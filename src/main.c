@@ -5,10 +5,9 @@
 #include <tice.h>
 #include <graphx.h>
 #include <fileioc.h>
+#include <debug.h>
 #include "init_font.h"
 #include "main_menu/main_menu.h"
-
-#define PROGRAM_STATE_APP_VAR_NAME "AJDBHC"
 
 #define EXIT_ERROR(str) do { \
     gfx_End();               \
@@ -28,5 +27,7 @@ int main(void) {
     drawMainMenu(state);
 
     ti_Close(stateVar);
+    os_DelAppVar(PROGRAM_STATE_APP_VAR_NAME);
+
     gfx_End();
 }

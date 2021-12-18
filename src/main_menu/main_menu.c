@@ -65,19 +65,19 @@ static void drawCursor(MMState *state, const char *cursorChar) {
     }                                      \
 } while (0);
 
-#define DRAW_ROW_VALUE(S, T, NUM, F) do {                                               \
-    if (screenRow > SCREEN_LINES) break;                                                \
-    if (rowsPassed++ >= state->scroll) {                                                \
-        drawAtCharPos(1, screenRow, S);                                                 \
-        drawAtCharPos(5, screenRow, "=");                                               \
-        char buffer[DESCRIPTION_SIZE];                                                  \
+#define DRAW_ROW_VALUE(S, T, NUM, F) do {                                                          \
+    if (screenRow > SCREEN_LINES) break;                                                           \
+    if (rowsPassed++ >= state->scroll) {                                                           \
+        drawAtCharPos(1, screenRow, S);                                                            \
+        drawAtCharPos(5, screenRow, "=");                                                          \
+        char buffer[DESCRIPTION_SIZE];                                                             \
         variableDescription(&state->eqs, eqForField(&state->eqs, T, NUM, F), buffer);   \
-        drawAtCharPos(7, screenRow++, buffer);                                          \
-    }                                                                                   \
+        drawAtCharPos(7, screenRow++, buffer);                                                     \
+    }                                                                                              \
 } while (0);
 
 static void drawRows(MMState *state) {
-    for (int i = 0; i < SCREEN_LINES; i++) {
+    for (int i = 0; i <= SCREEN_LINES; i++) {
         drawAtCharPos(0, i, EMPTY_ROW);
     }
 
@@ -88,9 +88,9 @@ static void drawRows(MMState *state) {
         DRAW_ROW_VALUE(state->eqs.freeVarNames[i], FREE_VAR, i, VAR)
     }
     for (int i = 0; i < state->eqs.velSumCount; i++) {
-        DRAW_ROW_VALUE(state->eqs.velSumNames[i], VEL, i, SUM_V)
-        DRAW_ROW_VALUE(" vx", VEL, i, VX)
-        DRAW_ROW_VALUE(" vy", VEL, i, VY)
+        DRAW_ROW_VALUE(state->eqs.velSumNames[i], VEL_SUM, i, SUM_V)
+        DRAW_ROW_VALUE(" vx", VEL_SUM, i, VX)
+        DRAW_ROW_VALUE(" vy", VEL_SUM, i, VY)
     }
     for (int i = 0; i < state->eqs.velCount; i++) {
         DRAW_ROW(state->eqs.velNames[i])
@@ -163,11 +163,11 @@ static bool executeNewVariableValue(MMState *state) {
     row -= state->eqs.velSumCount * VEL_SUM_ROWS;
     if (row < state->eqs.velCount * VEL_ROWS) {
         if (row % VEL_ROWS == 0) return false;
-        newVariableValue(state, eqNumForField(&state->eqs, VEL, row / VEL_ROWS, row % VEL_ROWS + 1));
+        newVariableValue(state, eqNumForField(&state->eqs, VEL, row / VEL_ROWS, row % VEL_ROWS - 1));
     }
     row -= state->eqs.velCount * VEL_ROWS;
     if (row % ACC_ROWS == 0) return false;
-    newVariableValue(state, eqNumForField(&state->eqs, ACC, row / ACC_ROWS, row % ACC_ROWS + 1));
+    newVariableValue(state, eqNumForField(&state->eqs, ACC, row / ACC_ROWS, row % ACC_ROWS - 1));
 }
 
 MMState *initMMState(ti_var_t file) {

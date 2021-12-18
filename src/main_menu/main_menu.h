@@ -8,6 +8,12 @@
 #include <fileioc.h>
 #include "mm_eqs.h"
 
+#define PROGRAM_STATE_APP_VAR_NAME "AJDBHC"
+
+typedef enum {
+    VAR_A, VAR_B, VARS_A_AND_B
+} VarsToGet;
+
 typedef struct {
     AllEqs eqs;
     int selectedRow;
@@ -16,6 +22,7 @@ typedef struct {
      * -1 for none;
      */
     int editingVar;
+    VarsToGet varsToGet;
 } MMState;
 
 MMState *initMMState(ti_var_t file);
