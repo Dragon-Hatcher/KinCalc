@@ -7,8 +7,6 @@
 
 #include "main_menu.h"
 
-void tiBasicA(MMState *state);
-void tiBasicB(MMState *state);
-void tiBasicAAndB(MMState *state);
+void getVariableInput(MMState *state, VarsToGet vars);
 
 #endif //KINCALC_CALL_TI_BASIC_H

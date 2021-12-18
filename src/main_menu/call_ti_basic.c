@@ -7,7 +7,6 @@
 #include <graphx.h>
 #include <fileioc.h>
 #include "init_font.h"
-#include <debug.h>
 
 int callback(void *data, int returnValue) {
     gfx_Begin();
@@ -37,44 +36,24 @@ int callback(void *data, int returnValue) {
     return 0;
 }
 
-void tiBasicA(MMState *state) {
+const char name[] = "KINCALCG";
+const char codeA[] = {tClLCD, tEnter, tPrompt, tA};
+const char codeB[] = {tClLCD, tEnter, tPrompt, tB};
+const char codeAB[] = {tClLCD, tEnter, tPrompt, tA, tComma, tB};
+const char *codes[] = {codeA, codeB, codeAB};
+const int codeSizes[] = {sizeof codeA, sizeof codeB, sizeof codeAB};
+
+void getVariableInput(MMState *state, VarsToGet vars) {
+    state->varsToGet = vars;
+
     gfx_End();
 
-    const char code[] = "\xE1\x3F\xDD\x41";
-    const char name[] = "OTINSA";
+    if (vars == VAR_A || vars == VARS_A_AND_B) ti_DeleteVar("A", TI_REAL_TYPE);
+    if (vars == VAR_B || vars == VARS_A_AND_B) ti_DeleteVar("B", TI_REAL_TYPE);
 
     ti_var_t program = ti_OpenVar(name, "w", TI_PRGM_TYPE);
-    ti_Write(code, sizeof code, 1, program);
+    ti_Write(codes[vars], codeSizes[vars], 1, program);
     ti_Close(program);
 
-    state->varsToGet = VAR_A;
-    os_RunPrgm(name, NULL, 0, callback);
-}
-
-void tiBasicB(MMState *state) {
-    gfx_End();
-
-    const char code[] = "\xE1\x3F\xDD\x42";
-    const char name[] = "OTINSA";
-
-    ti_var_t program = ti_OpenVar(name, "w", TI_PRGM_TYPE);
-    ti_Write(code, sizeof code, 1, program);
-    ti_Close(program);
-
-    state->varsToGet = VAR_B;
-    os_RunPrgm(name, NULL, 0, callback);
-}
-
-void tiBasicAAndB(MMState *state) {
-    gfx_End();
-
-    const char code[] = "\xE1\x3F\xDD\x41\x2B\x42";
-    const char name[] = "OTINSA";
-
-    ti_var_t program = ti_OpenVar(name, "w", TI_PRGM_TYPE);
-    ti_Write(code, sizeof code, 1, program);
-    ti_Close(program);
-
-    state->varsToGet = VARS_A_AND_B;
     os_RunPrgm(name, NULL, 0, callback);
 }
