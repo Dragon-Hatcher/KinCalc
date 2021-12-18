@@ -57,16 +57,16 @@ static void addVelSum(AllEqs *eqs, const char name[NAME_SIZE]) {
     if (eqs->velSumCount == VEL_SUM_VAR_COUNT) return;
     strcpy(eqs->velSumNames[eqs->velSumCount], name);
 
-    *eqForField(eqs, VEL_SUM, eqs->velCount, VEL_V) = EMPTY_EQ;
-    *eqForField(eqs, VEL_SUM, eqs->velCount, VX) = EMPTY_EQ;
-    *eqForField(eqs, VEL_SUM, eqs->velCount, VY) = EMPTY_EQ;
+    *eqForField(eqs, VEL_SUM, eqs->velSumCount, SUM_V) = EMPTY_EQ;
+    *eqForField(eqs, VEL_SUM, eqs->velSumCount, VX) = EMPTY_EQ;
+    *eqForField(eqs, VEL_SUM, eqs->velSumCount, VY) = EMPTY_EQ;
 
     eqs->velSumCount++;
 }
 
 static void addFreeVar(AllEqs *eqs, const char name[NAME_SIZE]) {
-    if (eqs->velSumCount == FREE_VAR_VAR_COUNT) return;
-    strcpy(eqs->freeVarNames[eqs->velSumCount], name);
+    if (eqs->freeVarCount == FREE_VAR_VAR_COUNT) return;
+    strcpy(eqs->freeVarNames[eqs->freeVarCount], name);
 
     *eqForField(eqs, FREE_VAR, eqs->freeVarCount, VAR) = EMPTY_EQ;
 
