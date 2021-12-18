@@ -8,7 +8,7 @@
 #include <fileioc.h>
 #include "init_font.h"
 
-int callback(void *data, int returnValue) {
+int callback(__attribute__((unused)) void *data, __attribute__((unused)) int returnValue) {
     gfx_Begin();
     initFont();
 
