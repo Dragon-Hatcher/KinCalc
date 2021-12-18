@@ -14,42 +14,56 @@ VariableValue *eqForField(AllEqs *eqs, EqType eqType, int eqNum, Field field) {
     return &eqs->variables[eqNumForField(eqType, eqNum, field)];
 }
 
+VarId varIdForNum(int varNum) {
+    if (varNum < ACC_TOT_VAR_COUNT)
+        return (VarId) {
+                .varNum = varNum,
+                .type = ACC,
+                .eqNum = varNum / ACC_FIELD_COUNT,
+                .field = varNum % ACC_FIELD_COUNT
+        };
+    varNum -= ACC_TOT_VAR_COUNT;
+
+    if (varNum < VEL_TOT_VAR_COUNT) {
+        return (VarId) {
+                .varNum = varNum,
+                .type = VEL,
+                .eqNum = varNum / VEL_FIELD_COUNT,
+                .field = varNum % VEL_FIELD_COUNT
+        };
+    }
+    varNum -= VEL_TOT_VAR_COUNT;
+
+    if (varNum < VEL_SUM_TOT_VAR_COUNT) {
+        return (VarId) {
+                .varNum = varNum,
+                .type = VEL_SUM,
+                .eqNum = varNum / VEL_SUM_FIELD_COUNT,
+                .field = varNum % VEL_SUM_FIELD_COUNT
+        };
+    }
+    varNum -= VEL_SUM_TOT_VAR_COUNT;
+
+    return (VarId) {
+        .varNum = varNum,
+        .type = FREE_VAR,
+        .eqNum = varNum,
+        .field = 0
+    };
+}
+
 static void fixString(char *str) {
     for (int i = 0; str[i]; i++) {
-        if(str[i] == '\x1A') str[i] = '\x0B';
-        if(str[i] == '\x1B') str[i] = '\x1C';
+        if (str[i] == '\x1A') str[i] = '\x0B';
+        if (str[i] == '\x1B') str[i] = '\x1C';
     }
 }
 
 static void nameForVar(char out[7], AllEqs *eqs, int varNum) {
-    EqType type;
-    int eqNum;
-    Field field;
-
-    if (varNum < eqs->accCount * ACC_FIELD_COUNT) {
-        type = ACC;
-        eqNum = varNum / ACC_FIELD_COUNT;
-        field = varNum % ACC_FIELD_COUNT;
-    } else {
-        varNum -= eqs->accCount * ACC_FIELD_COUNT;
-        if (varNum < eqs->velCount * VEL_FIELD_COUNT) {
-            type = VEL;
-            eqNum = varNum / VEL_FIELD_COUNT;
-            field = varNum % VEL_FIELD_COUNT;
-        } else {
-            varNum -= eqs->velCount * VEL_FIELD_COUNT;
-            if (varNum < eqs->velSumCount * VEL_SUM_FIELD_COUNT) {
-                type = VEL_SUM;
-                eqNum = varNum / VEL_SUM_FIELD_COUNT;
-                field = varNum % VEL_SUM_FIELD_COUNT;
-            } else {
-                varNum -= eqs->velSumCount * VEL_SUM_FIELD_COUNT;
-                type = FREE_VAR;
-                eqNum = varNum;
-                field = 0;
-            }
-        }
-    }
+    VarId varId = varIdForNum(varNum);
+    EqType type = varId.type;
+    Field field = varId.field;
+    int eqNum = varId.eqNum;
 
     if (type == FREE_VAR) {
         strcpy(out, eqs->freeVarNames[eqNum]);
