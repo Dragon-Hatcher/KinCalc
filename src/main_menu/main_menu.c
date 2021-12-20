@@ -7,12 +7,11 @@
 #include <tice.h>
 #include <graphx.h>
 #include <fileioc.h>
+#include <solve.h>
 #include "bottom_menu.h"
 #include "new_eq.h"
 #include "draw_simple_text.h"
 #include "new_variable_value.h"
-
-static void solve(void) {}
 
 #define CURSOR_CHAR "\x0F"
 #define EMPTY_ROW "                          "
@@ -82,6 +81,7 @@ static void drawRows(MMState *state) {
     int screenRow = 0;
     int rowsPassed = 0;
 
+    txt_setRow(0);
     for (int i = 0; i < state->eqs.freeVarCount; i++) {
         DRAW_VALUE(state->eqs.freeVarNames[i], FREE_VAR, i, VAR)
     }
@@ -201,7 +201,7 @@ void drawMainMenu(MMState *state) {
             fullRedraw(state);
         }
         if (key == sk_Trace || key == sk_Graph) {
-            solve();
+            solve(&state->eqs);
             state->selectedRow = 0;
             fullRedraw(state);
         }
