@@ -4,7 +4,8 @@
 
 #include "mm_eqs.h"
 
-#include "string.h"
+#include <string.h>
+#include "draw_simple_text.h"
 
 int eqNumForField(EqType eqType, int eqNum, Field field) {
     return varStartOffset[eqType] + eqNum * fieldCounts[eqType] + field;
@@ -59,48 +60,73 @@ static void fixString(char *str) {
     }
 }
 
-static void nameForVar(char out[7], AllEqs *eqs, int varNum) {
+static void drawNameForVar(AllEqs *eqs, int varNum) {
     VarId varId = varIdForNum(varNum);
     EqType type = varId.type;
     Field field = varId.field;
     int eqNum = varId.eqNum;
 
     if (type == FREE_VAR) {
-        strcpy(out, eqs->freeVarNames[eqNum]);
+        txt_writeStr(eqs->freeVarNames[eqNum]);
         return;
     }
 
-    if (type == VEL_SUM && field == SUM_V) strcpy(out, "v");
-    if (type == VEL_SUM && field == VX) strcpy(out, "vx");
-    if (type == VEL_SUM && field == VY) strcpy(out, "vy");
+    if (type == VEL_SUM && field == SUM_V) txt_writeStr("v");
+    if (type == VEL_SUM && field == VX) txt_writeStr("vx");
+    if (type == VEL_SUM && field == VY) txt_writeStr("vy");
 
-    if (type == VEL && field == VEL_V) strcpy(out, "v");
-    if (type == VEL && field == DX) strcpy(out, "\x16x");
-    if (type == VEL && field == DT) strcpy(out, "\x16t");
+    if (type == VEL && field == VEL_V) txt_writeStr("v");
+    if (type == VEL && field == DX) txt_writeStr("\x16x");
+    if (type == VEL && field == DT) txt_writeStr("\x16t");
 
-    if (type == ACC && field == DX) strcpy(out, "\x16x");
-    if (type == ACC && field == DT) strcpy(out, "\x16t");
-    if (type == ACC && field == V0) strcpy(out, "v0");
-    if (type == ACC && field == ACC_V) strcpy(out, "v");
-    if (type == ACC && field == A) strcpy(out, "a");
+    if (type == ACC && field == DX) txt_writeStr("\x16x");
+    if (type == ACC && field == DT) txt_writeStr("\x16t");
+    if (type == ACC && field == V0) txt_writeStr("v0");
+    if (type == ACC && field == ACC_V) txt_writeStr("v");
+    if (type == ACC && field == A) txt_writeStr("a");
 
-    strcat(out, "(");
+    txt_writeStr("(");
 
-    if (type == VEL_SUM) strcat(out, eqs->velSumNames[eqNum]);
-    if (type == VEL) strcat(out, eqs->velNames[eqNum]);
-    if (type == ACC) strcat(out, eqs->accNames[eqNum]);
+    if (type == VEL_SUM) txt_writeStr(eqs->velSumNames[eqNum]);
+    if (type == VEL) txt_writeStr(eqs->velNames[eqNum]);
+    if (type == ACC) txt_writeStr(eqs->accNames[eqNum]);
 
-    strcat(out, ")");
+    txt_writeStr(")");
 }
 
-void variableDescription(AllEqs *eqs, VariableValue *var, char output[DESCRIPTION_SIZE]) {
+
+void writeVarDescription(AllEqs *eqs, VariableValue *var) {
     if (var->status == UNDETERMINED) {
-        output[0] = '?';
-        output[1] = '\0';
+        txt_writeStr("?");
     } else if (var->status == CONSTANT) {
-        os_RealToStr(output, &var->value, 6, 1, -1);
-        fixString(output);
+        char out[7];
+        os_RealToStr(out, &var->value, 6, 1, -1);
+        fixString(out);
+        txt_writeStr(out);
     } else {
-        nameForVar(output, eqs, var->eq.varNum);
+        real_t zero = os_FloatToReal(0.0f);
+        real_t one = os_FloatToReal(1.0f);
+
+        if (os_RealCompare(&one, &var->eq.coeff) != 0) {
+            char out[7];
+            os_RealToStr(out, &var->eq.coeff, 6, 1, -1);
+            fixString(out);
+            txt_writeStr(out);
+        }
+
+        drawNameForVar(eqs, var->eq.varNum);
+
+        if (os_RealCompare(&zero, &var->eq.intercept) != 0) {
+            real_t intercept = var->eq.intercept;
+            bool isNeg = os_RealCompare(&zero, &intercept) == 1;
+            if (isNeg) intercept = os_RealNeg(&intercept);
+
+            txt_writeStr(isNeg ? "-" : "+");
+
+            char out[7];
+            os_RealToStr(out, &intercept, 6, 1, -1);
+            fixString(out);
+            txt_writeStr(out);
+        }
     }
 }

@@ -12,8 +12,8 @@
 
 static void redraw(const char *items[], int length, int offset, int select) {
     for (int row = 0, item = offset; row < 10 && item < length ; row++, item++) {
-        drawAtCharPos(1, row + 1, items[item]);
-        drawAtCharPos(0, row + 1, select == item ? "\x0F" : " ");
+        txt_writeStrAtPos(0, row + 1, select == item ? "\x0F" : " ");
+        txt_writeStrAtPos(1, row + 1, items[item]);
     }
 }
 
@@ -22,7 +22,7 @@ int menu(const char* title, const char *items[], int length) {
 
     bottomMenu(3, 2, "CANCEL");
 
-    drawAtCharPos(0, 0, title);
+    txt_writeStrAtPos(0, 0, title);
 
     int selectedItem = 0;
     int scroll = 0;

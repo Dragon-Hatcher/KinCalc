@@ -92,6 +92,6 @@ VarId varIdForNum(int varNum);
 #define DESCRIPTION_CHARS 17
 #define DESCRIPTION_SIZE (DESCRIPTION_CHARS + 1)
 
-void variableDescription(AllEqs *eqs, VariableValue *var, char output[DESCRIPTION_SIZE]);
+void writeVarDescription(AllEqs *eqs, VariableValue *var);
 
 #endif //KINCALC_MM_EQS_H

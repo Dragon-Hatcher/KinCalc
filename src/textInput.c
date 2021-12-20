@@ -19,13 +19,13 @@ void textInput(char *buffer, int maxLength, int minLength, int row, int col) {
 
         if (key == sk_Del && cursor != 0) {
             cursor--;
-            drawAtCharPos(col + cursor, row, " ");
+            txt_writeStrAtPos(col + cursor, row, " ");
             buffer[cursor] = '\0';
         }
         if (alphaChars[key] && cursor != maxLength) {
             buffer[cursor++] = alphaChars[key];
             buffer[cursor] = '\0';
-            drawAtCharPos(col, row, buffer);
+            txt_writeStrAtPos(col, row, buffer);
         }
 
     } while (true);

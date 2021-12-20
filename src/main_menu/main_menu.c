@@ -55,56 +55,54 @@ static void drawCursor(MMState *state, const char *cursorChar) {
         }
     }
 
-    drawAtCharPos(isIndented ? 1 : 0, screenRow, cursorChar);
+    txt_writeStrAtPos(isIndented ? 1 : 0, screenRow, cursorChar);
 }
 
-#define DRAW_ROW(S) do {                   \
-    if (screenRow > SCREEN_LINES) break;   \
-    if (rowsPassed++ >= state->scroll) {   \
-        drawAtCharPos(1, screenRow++, S);  \
-    }                                      \
+#define DRAW_ROW(R) do {                  \
+    if (screenRow > SCREEN_LINES) break;  \
+    if (rowsPassed++ >= state->scroll) {  \
+        R;                                \
+        screenRow++;                      \
+        txt_newline();                    \
+    }                                     \
 } while (0);
 
-#define DRAW_ROW_VALUE(S, T, NUM, F) do {                                                          \
-    if (screenRow > SCREEN_LINES) break;                                                           \
-    if (rowsPassed++ >= state->scroll) {                                                           \
-        drawAtCharPos(1, screenRow, S);                                                            \
-        drawAtCharPos(5, screenRow, "=");                                                          \
-        char buffer[DESCRIPTION_SIZE];                                                             \
-        variableDescription(&state->eqs, eqForField(&state->eqs, T, NUM, F), buffer);   \
-        drawAtCharPos(7, screenRow++, buffer);                                                     \
-    }                                                                                              \
-} while (0);
+#define DRAW_VALUE(N, T, I, F) DRAW_ROW({                                \
+    txt_WriteStrAtCol(1, N);                                             \
+    txt_WriteStrAtCol(4, " = ");                                         \
+    writeVarDescription(&state->eqs, eqForField(&state->eqs, T, I, F));  \
+})
+
 
 static void drawRows(MMState *state) {
     for (int i = 0; i <= SCREEN_LINES; i++) {
-        drawAtCharPos(0, i, EMPTY_ROW);
+        txt_writeStrAtPos(0, i, EMPTY_ROW);
     }
 
     int screenRow = 0;
     int rowsPassed = 0;
 
     for (int i = 0; i < state->eqs.freeVarCount; i++) {
-        DRAW_ROW_VALUE(state->eqs.freeVarNames[i], FREE_VAR, i, VAR)
+        DRAW_VALUE(state->eqs.freeVarNames[i], FREE_VAR, i, VAR)
     }
     for (int i = 0; i < state->eqs.velSumCount; i++) {
-        DRAW_ROW_VALUE(state->eqs.velSumNames[i], VEL_SUM, i, SUM_V)
-        DRAW_ROW_VALUE(" vx", VEL_SUM, i, VX)
-        DRAW_ROW_VALUE(" vy", VEL_SUM, i, VY)
+        DRAW_VALUE(state->eqs.velSumNames[i], VEL_SUM, i, SUM_V)
+        DRAW_VALUE(" vx", VEL_SUM, i, VX)
+        DRAW_VALUE(" vy", VEL_SUM, i, VY)
     }
     for (int i = 0; i < state->eqs.velCount; i++) {
-        DRAW_ROW(state->eqs.velNames[i])
-        DRAW_ROW_VALUE(" \x16x", VEL, i, DX)
-        DRAW_ROW_VALUE(" \x16t", VEL, i, DT)
-        DRAW_ROW_VALUE(" v", VEL, i, VEL_V)
+        DRAW_ROW(txt_writeStrAtPos(1, screenRow, state->eqs.velNames[i]))
+        DRAW_VALUE(" \x16x", VEL, i, DX)
+        DRAW_VALUE(" \x16t", VEL, i, DT)
+        DRAW_VALUE(" v", VEL, i, VEL_V)
     }
     for (int i = 0; i < state->eqs.accCount; i++) {
-        DRAW_ROW(state->eqs.accNames[i])
-        DRAW_ROW_VALUE(" \x16x", ACC, i, DX)
-        DRAW_ROW_VALUE(" \x16t", ACC, i, DT)
-        DRAW_ROW_VALUE(" v0", ACC, i, V0)
-        DRAW_ROW_VALUE(" v", ACC, i, ACC_V)
-        DRAW_ROW_VALUE(" a", ACC, i, A)
+        DRAW_ROW(txt_writeStrAtPos(1, screenRow, state->eqs.accNames[i]))
+        DRAW_VALUE(" \x16x", ACC, i, DX)
+        DRAW_VALUE(" \x16t", ACC, i, DT)
+        DRAW_VALUE(" v0", ACC, i, V0)
+        DRAW_VALUE(" v", ACC, i, ACC_V)
+        DRAW_VALUE(" a", ACC, i, A)
     }
 }
 

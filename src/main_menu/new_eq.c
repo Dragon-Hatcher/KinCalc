@@ -25,7 +25,7 @@ static int newEqType(void) {
 
 static void getName(char nameOut[NAME_SIZE]) {
     gfx_FillScreen(0xFF);
-    drawAtCharPos(0, 0, "Name: ");
+    txt_writeStrAtPos(0, 0, "Name: ");
     textInput(nameOut, NAME_CHAR_COUNT, 1, 0, 5);
 }
 
