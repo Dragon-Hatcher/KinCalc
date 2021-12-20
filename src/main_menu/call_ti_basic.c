@@ -8,9 +8,12 @@
 #include <fileioc.h>
 #include "init_font.h"
 
+#define GETTER_PROGRAM_NAME "KINCALCG"
+
 int callback(__attribute__((unused)) void *data, __attribute__((unused)) int returnValue) {
     gfx_Begin();
     initFont();
+    ti_DeleteVar(GETTER_PROGRAM_NAME, TI_PPRGM_TYPE);
 
     ti_var_t stateVar = ti_Open(PROGRAM_STATE_APP_VAR_NAME, "r");
     if(!stateVar) return 1;
@@ -30,13 +33,11 @@ int callback(__attribute__((unused)) void *data, __attribute__((unused)) int ret
 
     ti_Close(stateVar);
     os_DelAppVar(PROGRAM_STATE_APP_VAR_NAME);
-    os_DelAppVar("OTINSA");
     gfx_End();
 
     return 0;
 }
 
-const char name[] = "KINCALCG";
 const char codeA[] = {tClLCD, tEnter, tPrompt, tA};
 const char codeB[] = {tClLCD, tEnter, tPrompt, tB};
 const char codeAB[] = {tClLCD, tEnter, tPrompt, tA, tComma, tB};
@@ -51,9 +52,9 @@ void getVariableInput(MMState *state, VarsToGet vars) {
     if (vars == VAR_A || vars == VARS_A_AND_B) ti_DeleteVar("A", TI_REAL_TYPE);
     if (vars == VAR_B || vars == VARS_A_AND_B) ti_DeleteVar("B", TI_REAL_TYPE);
 
-    ti_var_t program = ti_OpenVar(name, "w", TI_PRGM_TYPE);
+    ti_var_t program = ti_OpenVar(GETTER_PROGRAM_NAME, "w", TI_PPRGM_TYPE);
     ti_Write(codes[vars], codeSizes[vars], 1, program);
     ti_Close(program);
 
-    os_RunPrgm(name, NULL, 0, callback);
+    os_RunPrgm(GETTER_PROGRAM_NAME, NULL, 0, callback);
 }
