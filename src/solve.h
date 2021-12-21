@@ -5,4 +5,6 @@
 #ifndef KINCALC_SOLVE_H
 #define KINCALC_SOLVE_H
 
+void solve(AllEqs *eqs);
+
 #endif //KINCALC_SOLVE_H
