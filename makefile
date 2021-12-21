@@ -4,7 +4,7 @@
 
 NAME = KINCALC
 DESCRIPTION = "Solve Kinematic Eqs!"
-COMPRESSED = NO
+COMPRESSED = YES
 ARCHIVED = NO
 
 CFLAGS = -Wall -Wextra -Oz
