@@ -53,7 +53,7 @@ VarId varIdForNum(int varNum) {
     };
 }
 
-static void fixString(char *str) {
+void fixString(char *str) {
     for (int i = 0; str[i]; i++) {
         if (str[i] == '\x1A') str[i] = '\x0B';
         if (str[i] == '\x1B') str[i] = '\x1C';

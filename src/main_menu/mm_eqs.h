@@ -94,4 +94,6 @@ VarId varIdForNum(int varNum);
 
 void writeVarDescription(AllEqs *eqs, VariableValue *var);
 
+void fixString(char *str);
+
 #endif //KINCALC_MM_EQS_H
