@@ -16,7 +16,7 @@ int callback(__attribute__((unused)) void *data, __attribute__((unused)) int ret
     ti_DeleteVar(GETTER_PROGRAM_NAME, TI_PPRGM_TYPE);
 
     ti_var_t stateVar = ti_Open(PROGRAM_STATE_APP_VAR_NAME, "r");
-    if(!stateVar) return 1;
+    if (!stateVar) return 1;
 
     MMState *state = ti_GetDataPtr(stateVar);
     VariableValue *var = &state->eqs.variables[state->editingVar];

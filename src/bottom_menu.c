@@ -24,7 +24,7 @@ static void printTextCentered(const char *str, unsigned int x, unsigned int widt
     fontlib_DrawString(str);
 }
 
-void bottomMenu(uint8_t pos, uint8_t cellWidth, const char* text) {
+void bottomMenu(uint8_t pos, uint8_t cellWidth, const char *text) {
     int x = M_SIDE_GAP + ML_THICKNESS + pos * (M_WIDTH + ML_THICKNESS + 1);
     int y = LCD_HEIGHT - M_HEIGHT - ML_THICKNESS;
 

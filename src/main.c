@@ -22,7 +22,7 @@ int main(void) {
 
     if (initFont()) EXIT_ERROR("Missing font OSLFONT.");
     ti_var_t stateVar = ti_Open(PROGRAM_STATE_APP_VAR_NAME, "w");
-    if(!stateVar) EXIT_ERROR("Could not open appvar");
+    if (!stateVar) EXIT_ERROR("Could not open appvar");
     MMState *state = initMMState(stateVar);
     drawMainMenu(state);
 

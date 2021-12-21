@@ -11,7 +11,7 @@
 #include "draw_simple_text.h"
 
 static VariableValue EMPTY_EQ = (VariableValue) {
-    .status = UNDETERMINED
+        .status = UNDETERMINED
 };
 
 static int newEqType(void) {

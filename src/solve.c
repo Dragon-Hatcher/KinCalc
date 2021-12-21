@@ -54,7 +54,7 @@ static bool updateVars(AllEqs *eqs) {
 
 static bool updateVelSums(AllEqs *eqs) {
     bool change = false;
-    for(int i = 0; i < eqs->velSumCount; i++) {
+    for (int i = 0; i < eqs->velSumCount; i++) {
         VariableValue *v = eqForField(eqs, VEL_SUM, i, SUM_V);
         VariableValue *vx = eqForField(eqs, VEL_SUM, i, VX);
         VariableValue *vy = eqForField(eqs, VEL_SUM, i, VY);
@@ -97,7 +97,7 @@ static bool updateVelSums(AllEqs *eqs) {
 
 static bool updateConstantVel(AllEqs *eqs) {
     bool change = false;
-    for(int i = 0; i < eqs->velCount; i++) {
+    for (int i = 0; i < eqs->velCount; i++) {
         VariableValue *v = eqForField(eqs, VEL, i, VEL_V);
         VariableValue *dx = eqForField(eqs, VEL, i, DX);
         VariableValue *dt = eqForField(eqs, VEL, i, DT);
@@ -122,7 +122,7 @@ static bool updateConstantVel(AllEqs *eqs) {
 
 static bool updateConstantAcc(AllEqs *eqs) {
     bool change = false;
-    for(int i = 0; i < eqs->accCount; i++) {
+    for (int i = 0; i < eqs->accCount; i++) {
         VariableValue *dx = eqForField(eqs, ACC, i, DX);
         VariableValue *dt = eqForField(eqs, ACC, i, DT);
         VariableValue *v0 = eqForField(eqs, ACC, i, V0);
@@ -304,7 +304,7 @@ static bool updateConstantAcc(AllEqs *eqs) {
                 real_t twoA = os_RealMul(&two, &a->value);
                 real_t twoADx = os_RealMul(&twoA, &dx->value);
                 real_t sum = os_RealAdd(&v0v0, &twoADx);
-                real_t zero  = os_FloatToReal(0.0f);
+                real_t zero = os_FloatToReal(0.0f);
                 if (os_RealCompare(&sum, &zero) >= 0) {
                     real_t root = os_RealSqrt(&sum);
                     setVar(eqs, v, &root);

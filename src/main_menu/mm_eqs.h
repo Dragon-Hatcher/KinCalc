@@ -86,7 +86,9 @@ typedef struct {
 } VarId;
 
 int eqNumForField(EqType eqType, int eqNum, Field field);
+
 VariableValue *eqForField(AllEqs *eqs, EqType eqType, int eqNum, Field field);
+
 VarId varIdForNum(int varNum);
 
 #define DESCRIPTION_CHARS 17
