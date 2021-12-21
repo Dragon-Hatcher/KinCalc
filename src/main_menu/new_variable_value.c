@@ -5,6 +5,7 @@
 #include "new_variable_value.h"
 
 #include <string.h>
+#include <draw_simple_text.h>
 #include "menu.h"
 #include "call_ti_basic.h"
 
@@ -35,7 +36,9 @@ static int chooseVar(AllEqs *eqs, int except) {
     for (int i = 0; i < eqs->velCount; i++) {
         assoc[varNum] = eqNumForField(VEL, i, DX);
         strcat(strs[varNum], eqs->velNames[i]);
-        strcat(strs[varNum++],strlen(eqs->velNames[i]) == 1 ? ": \x16x" : ":\x16x");
+        strcat(strs[varNum], strlen(eqs->velNames[i]) == 1 ? ": \x16" : ":\x16");
+        char str[2] = {lowercase(eqs->velNames[i][0]), '\0'};
+        strcat(strs[varNum++], str);
         assoc[varNum] = eqNumForField(VEL, i, DT);
         strcat(strs[varNum++], "   \x16t");
         assoc[varNum] = eqNumForField(VEL, i, VEL_V);
@@ -43,9 +46,10 @@ static int chooseVar(AllEqs *eqs, int except) {
     }
     for (int i = 0; i < eqs->accCount; i++) {
         strcat(strs[varNum], eqs->accNames[i]);
-        strcat(strs[varNum],strlen(eqs->accNames[i]) == 1 ? ": " : ":");
+        strcat(strs[varNum], strlen(eqs->accNames[i]) == 1 ? ": \x16" : ":\x16");
         assoc[varNum] = eqNumForField(ACC, i, DX);
-        strcat(strs[varNum++], "\x16x");
+        char str[2] = {lowercase(eqs->accNames[i][0]), '\0'};
+        strcat(strs[varNum++], str);
         assoc[varNum] = eqNumForField(ACC, i, DT);
         strcat(strs[varNum++], "   \x16t");
         assoc[varNum] = eqNumForField(ACC, i, V0);

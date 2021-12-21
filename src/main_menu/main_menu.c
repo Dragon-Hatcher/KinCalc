@@ -92,13 +92,23 @@ static void drawRows(MMState *state) {
     }
     for (int i = 0; i < state->eqs.velCount; i++) {
         DRAW_ROW(txt_writeStrAtPos(1, screenRow, state->eqs.velNames[i]))
-        DRAW_VALUE(" \x16x", VEL, i, DX)
+        DRAW_ROW({
+                     txt_WriteStrAtCol(1, " \x16");
+                     txt_WriteCharAtCol(3, lowercase(state->eqs.velNames[i][0]));
+                     txt_WriteStrAtCol(4, " = ");
+                     writeVarDescription(&state->eqs, eqForField(&state->eqs, VEL, i, DX));
+                 })
         DRAW_VALUE(" \x16t", VEL, i, DT)
         DRAW_VALUE(" v", VEL, i, VEL_V)
     }
     for (int i = 0; i < state->eqs.accCount; i++) {
         DRAW_ROW(txt_writeStrAtPos(1, screenRow, state->eqs.accNames[i]))
-        DRAW_VALUE(" \x16x", ACC, i, DX)
+        DRAW_ROW({
+            txt_WriteStrAtCol(1, " \x16");
+            txt_WriteCharAtCol(3, lowercase(state->eqs.accNames[i][0]));
+            txt_WriteStrAtCol(4, " = ");
+            writeVarDescription(&state->eqs, eqForField(&state->eqs, ACC, i, DX));
+        })
         DRAW_VALUE(" \x16t", ACC, i, DT)
         DRAW_VALUE(" v0", ACC, i, V0)
         DRAW_VALUE(" v", ACC, i, ACC_V)
@@ -209,7 +219,7 @@ void drawMainMenu(MMState *state) {
         if (key == sk_Down) doScroll(state, false);
 
         if (key == sk_Enter) {
-            if(executeNewVariableValue(state)) fullRedraw(state);
+            if (executeNewVariableValue(state)) fullRedraw(state);
         }
     } while (true);
 }

@@ -39,8 +39,23 @@ void txt_WriteStrAtCol(int charX, const char *str) {
     txt_writeStr(str);
 }
 
+void txt_WriteCharAtCol(int charX, char charToWrite) {
+    txt_setCol(charX);
+    char str[2] = {charToWrite, '\0'};
+    txt_writeStr(str);
+}
+
+
 void txt_writeStrAtPos(int charX, int charY, const char *str) {
     txt_setCol(charX);
     txt_setRow(charY);
     txt_writeStr(str);
+}
+
+char lowercase(char toLowercase) {
+    if (toLowercase >= 0x41 && toLowercase <= 0x5A) {
+        return (char)(toLowercase + 0x20);
+    } else {
+        return toLowercase;
+    }
 }
