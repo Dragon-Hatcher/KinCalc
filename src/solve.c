@@ -202,21 +202,37 @@ static bool updateConstantAcc(AllEqs *eqs) {
                     real_t plus = os_RealDiv(&plusNum, &negA);
                     real_t minus = os_RealDiv(&minusNum, &negA);
 
-                    char plusStr[7];
-                    char minusStr[7];
-                    os_RealToStr(plusStr, &plus, 6, 1, -1);
-                    os_RealToStr(minusStr, &minus, 6, 1, -1);
-                    fixString(plusStr);
-                    fixString(minusStr);
-                    char *options[2] = {plusStr, minusStr};
+                    bool plusIsPos = os_RealCompare(&plus, &zero) >= 0;
+                    bool minusIsPos = os_RealCompare(&minus, &zero) >= 0;
 
-                    char title[26] = "Pick a value for \x16t(";
-                    strcat(title, eqs->accNames[i]);
-                    strcat(title, "):");
+                    bool usingPlus;
+                    bool possibleValue = true;
 
-                    int choice = menu(title, (const char **) options, 2);
-                    if (choice != -1) {
-                        setVar(eqs, dt, choice == 0 ? &plus : &minus);
+                    if (plusIsPos && !minusIsPos) {
+                        usingPlus = true;
+                    } else if (!plusIsPos && minusIsPos) {
+                        usingPlus = false;
+                    } else if (plusIsPos && minusIsPos) {
+                        char plusStr[7];
+                        char minusStr[7];
+                        os_RealToStr(plusStr, &plus, 6, 1, -1);
+                        os_RealToStr(minusStr, &minus, 6, 1, -1);
+                        fixString(plusStr);
+                        fixString(minusStr);
+                        char *options[2] = {plusStr, minusStr};
+
+                        char title[26] = "Pick a value for \x16t(";
+                        strcat(title, eqs->accNames[i]);
+                        strcat(title, "):");
+
+                        int choice = menu(title, (const char **) options, 2);
+                        usingPlus = choice == 0;
+                        possibleValue = choice != -1;
+                    } else {
+                        possibleValue = false;
+                    }
+                    if (possibleValue) {
+                        setVar(eqs, dt, usingPlus ? &plus : &minus);
                         change = true;
                     }
                 }
@@ -236,21 +252,37 @@ static bool updateConstantAcc(AllEqs *eqs) {
                     real_t plus = os_RealDiv(&plusNum, &a->value);
                     real_t minus = os_RealDiv(&minusNum, &a->value);
 
-                    char plusStr[7];
-                    char minusStr[7];
-                    os_RealToStr(plusStr, &plus, 6, 1, -1);
-                    os_RealToStr(minusStr, &minus, 6, 1, -1);
-                    fixString(plusStr);
-                    fixString(minusStr);
-                    char *options[2] = {plusStr, minusStr};
+                    bool plusIsPos = os_RealCompare(&plus, &zero) >= 0;
+                    bool minusIsPos = os_RealCompare(&minus, &zero) >= 0;
 
-                    char title[26] = "Pick a value for \x16t(";
-                    strcat(title, eqs->accNames[i]);
-                    strcat(title, "):");
+                    bool usingPlus;
+                    bool possibleValue = true;
 
-                    int choice = menu(title, (const char **) options, 2);
-                    if (choice != -1) {
-                        setVar(eqs, dt, choice == 0 ? &plus : &minus);
+                    if (plusIsPos && !minusIsPos) {
+                        usingPlus = true;
+                    } else if (!plusIsPos && minusIsPos) {
+                        usingPlus = false;
+                    } else if (plusIsPos && minusIsPos) {
+                        char plusStr[7];
+                        char minusStr[7];
+                        os_RealToStr(plusStr, &plus, 6, 1, -1);
+                        os_RealToStr(minusStr, &minus, 6, 1, -1);
+                        fixString(plusStr);
+                        fixString(minusStr);
+                        char *options[2] = {plusStr, minusStr};
+
+                        char title[26] = "Pick a value for \x16t(";
+                        strcat(title, eqs->accNames[i]);
+                        strcat(title, "):");
+
+                        int choice = menu(title, (const char **) options, 2);
+                        usingPlus = choice == 0;
+                        possibleValue = choice != -1;
+                    } else {
+                        possibleValue = false;
+                    }
+                    if (possibleValue) {
+                        setVar(eqs, dt, usingPlus ? &plus : &minus);
                         change = true;
                     }
                 }
