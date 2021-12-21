@@ -11,7 +11,7 @@ void textInput(char *buffer, int maxLength, int minLength, int row, int col) {
     int cursor = 0;
     buffer[cursor] = '\0';
 
-    const char *alphaChars = "\0\0\0\0\0\0\0\0\0\0\"WRMH\0\0?[VQLG\0\0:ZUPKFC\0 YTOJEB\0\0XSNIDA\0\0\0\0\0\0\0\0";
+    const char *alphaChars = "\0\0\0\0\0\0\0\0\0\0\0WRMH\0\0?\xB6VQLG\0\0\0ZUPKFC\0\0YTOJEB\0\0XSNIDA\0\0\0\0\0\0\0\0";
 
     do {
         sk_key_t key = os_GetCSC();
