@@ -123,8 +123,6 @@ static void drawMenus() {
 }
 
 static void fullRedraw(MMState *state) {
-    state->scroll = 0;
-    state->selectedRow = 0;
     gfx_FillScreen(0xFF);
     drawMenus();
     drawRows(state);
@@ -208,10 +206,13 @@ void drawMainMenu(MMState *state) {
         if (key == sk_Yequ) break;
         if (key == sk_Window || key == sk_Zoom) {
             newEq(&state->eqs);
+            state->scroll = 0;
+            state->selectedRow = 0;
             fullRedraw(state);
         }
         if (key == sk_Trace || key == sk_Graph) {
             solve(&state->eqs);
+            state->scroll = 0;
             state->selectedRow = 0;
             fullRedraw(state);
         }
