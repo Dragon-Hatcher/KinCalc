@@ -9,7 +9,7 @@
 #include "menu.h"
 #include "call_ti_basic.h"
 
-static int chooseVar(AllEqs *eqs, int except) {
+static int chooseVar(AllEqs *eqs, int exceptVarNum) {
     int varCount = eqs->accCount * 5 + eqs->velCount * 3 + eqs->velSumCount * 3 + eqs->freeVarCount;
     int varNum = 0;
     char strs[varCount][NAME_SIZE + 3];
@@ -64,7 +64,21 @@ static int chooseVar(AllEqs *eqs, int except) {
         options[i] = strs[i];
     }
 
-    int choice = menu("Choose a Variable:", (const char **) options, varCount);
+    int except;
+    VarId exceptVarId = varIdForNum(exceptVarNum);
+    if (exceptVarId.type == FREE_VAR) {
+        except = exceptVarId.eqNum;
+    } else if (exceptVarId.type == VEL_SUM) {
+        except = eqs->freeVarCount + exceptVarId.eqNum * VEL_SUM_FIELD_COUNT + exceptVarId.field;
+    } else if (exceptVarId.type == VEL) {
+        except = eqs->freeVarCount + eqs->velSumCount * VEL_SUM_FIELD_COUNT + exceptVarId.varNum * VEL_FIELD_COUNT +
+                 exceptVarId.field;
+    } else {
+        except = eqs->freeVarCount + eqs->velSumCount * VEL_SUM_FIELD_COUNT + eqs->velCount * VEL_FIELD_COUNT +
+                exceptVarId.eqNum * ACC_FIELD_COUNT + exceptVarId.field;
+    }
+
+    int choice = menuExcept("Choose a Variable:", (const char **) options, varCount, except);
     if (choice == -1) return -1;
     return assoc[choice];
 }
