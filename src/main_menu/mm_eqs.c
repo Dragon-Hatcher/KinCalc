@@ -46,10 +46,10 @@ VarId varIdForNum(int varNum) {
     varNum -= VEL_SUM_TOT_VAR_COUNT;
 
     return (VarId) {
-        .varNum = varNum,
-        .type = FREE_VAR,
-        .eqNum = varNum,
-        .field = 0
+            .varNum = varNum,
+            .type = FREE_VAR,
+            .eqNum = varNum,
+            .field = 0
     };
 }
 
@@ -76,10 +76,16 @@ static void drawNameForVar(AllEqs *eqs, int varNum) {
     if (type == VEL_SUM && field == VY) txt_writeStr("vy");
 
     if (type == VEL && field == VEL_V) txt_writeStr("v");
-    if (type == VEL && field == DX) txt_writeStr("\x16x");
+    if (type == VEL && field == DX) {
+        txt_writeStr("\x16");
+        txt_WriteChar(lowercase(eqs->velNames[eqNum][0]));
+    }
     if (type == VEL && field == DT) txt_writeStr("\x16t");
 
-    if (type == ACC && field == DX) txt_writeStr("\x16x");
+    if (type == ACC && field == DX) {
+        txt_writeStr("\x16");
+        txt_WriteChar(lowercase(eqs->accNames[eqNum][0]));
+    }
     if (type == ACC && field == DT) txt_writeStr("\x16t");
     if (type == ACC && field == V0) txt_writeStr("v0");
     if (type == ACC && field == ACC_V) txt_writeStr("v");

@@ -18,6 +18,7 @@ void txt_setRow(int rows);
 void txt_newline();
 
 void txt_writeStr(const char *str);
+void txt_WriteChar(char toWrite);
 void txt_WriteStrAtCol(int charX, const char *str);
 void txt_WriteCharAtCol(int charX, char charToWrite);
 void txt_writeStrAtPos(int charX, int charY, const char *str);

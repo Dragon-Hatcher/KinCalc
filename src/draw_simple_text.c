@@ -34,6 +34,11 @@ void txt_writeStr(const char *str) {
     pixelsOver += (int) strlen(str) * CHAR_WIDTH;
 }
 
+void txt_WriteChar(char toWrite) {
+    char str[2] = {toWrite, '\0'};
+    txt_writeStr(str);
+}
+
 void txt_WriteStrAtCol(int charX, const char *str) {
     txt_setCol(charX);
     txt_writeStr(str);
