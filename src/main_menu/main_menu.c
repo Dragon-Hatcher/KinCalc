@@ -118,7 +118,7 @@ static void drawRows(MMState *state) {
 
 static void drawMenus() {
     bottomMenu(0, 1, "QUIT");
-    bottomMenu(1, 2, "NEW EQ");
+    bottomMenu(1, 2, "NEW COMP");
     bottomMenu(3, 2, "SOLVE");
 }
 

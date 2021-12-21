@@ -20,13 +20,13 @@ static int newEqType(void) {
     eqTypes[1] = "Constant Velocity";
     eqTypes[2] = "Velocity from Components";
     eqTypes[3] = "Free Variable";
-    return menu("Equation Type:", (const char **) eqTypes, 4);
+    return menu("Component Type:", (const char **) eqTypes, 4);
 }
 
 static void getName(char nameOut[NAME_SIZE]) {
     gfx_FillScreen(0xFF);
-    txt_writeStrAtPos(0, 0, "Name: ");
-    textInput(nameOut, NAME_CHAR_COUNT, 1, 0, 5);
+    txt_writeStrAtPos(0, 0, "Component Name: ");
+    textInput(nameOut, NAME_CHAR_COUNT, 1, 0, 16);
 }
 
 static void addConstAcc(AllEqs *eqs, const char name[NAME_SIZE]) {
