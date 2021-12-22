@@ -8,6 +8,8 @@
 #include <graphx.h>
 #include <fileioc.h>
 #include <solve.h>
+#include <string.h>
+#include <menu.h>
 #include "bottom_menu.h"
 #include "new_eq.h"
 #include "draw_simple_text.h"
@@ -178,6 +180,87 @@ static bool executeNewVariableValue(MMState *state) {
     return true;
 }
 
+static bool deleteValue(MMState * state) {
+    EqType type;
+    int eqNum;
+    Field eqField;
+
+    int row = state->selectedRow;
+    if (row < state->eqs.freeVarCount) {
+        type = FREE_VAR;
+        eqNum = row;
+        eqField = VAR;
+    } else {
+        row -= state->eqs.freeVarCount;
+        if (row < state->eqs.velSumCount * VEL_SUM_ROWS) {
+            type = VEL_SUM;
+            eqNum = row / VEL_SUM_ROWS;
+            eqField = row % VEL_SUM_ROWS;
+        } else {
+            row -= state->eqs.velSumCount * VEL_SUM_ROWS;
+            if (row < state->eqs.velCount * VEL_ROWS) {
+                if (row % VEL_ROWS == 0) return false;
+                type = VEL;
+                eqNum = row / VEL_ROWS;
+                eqField = row % VEL_ROWS - 1;
+            } else {
+                row -= state->eqs.velCount * VEL_ROWS;
+                if (row % ACC_ROWS == 0) return false;
+                type = ACC;
+                eqNum = row / ACC_ROWS;
+                eqField = row % ACC_ROWS - 1;
+            }
+        }
+    }
+
+    char title[26] = "Delete ";
+    if (type == FREE_VAR) {
+        strcat(title, state->eqs.freeVarNames[eqNum]);
+    } else if (type == VEL_SUM) {
+        if (eqField == SUM_V) strcat(title, "v");
+        if (eqField == VX) strcat(title, "vx");
+        if (eqField == VY) strcat(title, "vy");
+        strcat(title, "(");
+        strcat(title, state->eqs.velSumNames[eqNum]);
+        strcat(title, ")");
+    } else if (type == VEL) {
+        if (eqField == DX) {
+            char str[3] = {'\x16', lowercase(state->eqs.velNames[eqNum][0]), '\0'};
+            strcat(title, str);
+        }
+        if (eqField == DT) strcat(title, "\x16t");
+        if (eqField == VEL_V) strcat(title, "v");
+        strcat(title, "(");
+        strcat(title, state->eqs.velNames[eqNum]);
+        strcat(title, ")");
+    } else {
+        if (eqField == DX) {
+            char str[3] = {'\x16', lowercase(state->eqs.accNames[eqNum][0]), '\0'};
+            strcat(title, str);
+        }
+        if (eqField == DT) strcat(title, "\x16t");
+        if (eqField == V0) strcat(title, "v0");
+        if (eqField == ACC_V) strcat(title, "v");
+        if (eqField == A) strcat(title, "a");
+        strcat(title, "(");
+        strcat(title, state->eqs.accNames[eqNum]);
+        strcat(title, ")");
+    }
+    strcat(title, "'s value?");
+
+    char *options[2];
+    options[0] = "No";
+    options[1] = "Yes";
+    int choice = menu(title, (const char **) options, 2);
+
+    if (choice == 1) {
+        VariableValue *var = eqForField(&state->eqs, type, eqNum, eqField);
+        var->status = UNDETERMINED;
+    }
+
+    return true;
+}
+
 MMState *initMMState(ti_var_t file) {
     AllEqs eqs = {
             .accCount = 0,
@@ -221,6 +304,11 @@ void drawMainMenu(MMState *state) {
 
         if (key == sk_Enter) {
             if (executeNewVariableValue(state)) fullRedraw(state);
+        }
+
+        if (key == sk_Del) {
+            deleteValue(state);
+            fullRedraw(state);
         }
     } while (true);
 }
