@@ -22,7 +22,8 @@ static int chooseVar(AllEqs *eqs, int exceptVarNum) {
 
     for (int i = 0; i < eqs->freeVarCount; i++) {
         strcat(strs[varNum], eqs->freeVarNames[i]);
-        assoc[varNum++] = eqNumForField(FREE_VAR, i, VAR);
+        assoc[varNum] = eqNumForField(FREE_VAR, i, VAR);
+        strcat(strs[varNum++], "   ");
     }
     for (int i = 0; i < eqs->velSumCount; i++) {
         assoc[varNum] = eqNumForField(VEL_SUM, i, SUM_V);

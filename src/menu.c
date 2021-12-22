@@ -5,6 +5,7 @@
 #include "menu.h"
 
 #include <graphx.h>
+#include <string.h>
 #include "bottom_menu.h"
 #include "draw_simple_text.h"
 #include "init_font.h"
@@ -17,9 +18,15 @@ static void redraw(const char *items[], int length, int offset, int select, int 
         txt_writeStrAtPos(1, row, items[item]);
         if (item == except) {
             int y = START_HEIGHT + LINE_HEIGHT * row + 8;
-            int x1 = START_WIDTH + CHAR_WIDTH * 3.5;
-            int x2 = START_WIDTH + CHAR_WIDTH * 6.5 - 1;
-            if (items[item][4] == ' ') x2 -= CHAR_WIDTH;
+            int x1, x2;
+            if (items[item][3] == ' ') {
+                x1 = START_WIDTH + CHAR_WIDTH * 1 - 2;
+                x2 = START_WIDTH + CHAR_WIDTH * (items[item][1] == ' ' ? 2 : 3) - 1;
+            } else {
+                x1 = START_WIDTH + CHAR_WIDTH * 3.5;
+                x2 = START_WIDTH + CHAR_WIDTH * 6.5 - 1;
+                if (items[item][4] == ' ') x2 -= CHAR_WIDTH;
+            }
             gfx_SetColor(0xC0);
             gfx_Line(x1, y, x2, y);
             gfx_Line(x1, y + 1, x2, y + 1);
