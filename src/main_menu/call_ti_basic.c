@@ -22,7 +22,7 @@ int callback(__attribute__((unused)) void *data, __attribute__((unused)) int ret
     VariableValue *var = &state->eqs.variables[state->editingVar];
     VarsToGet vars = state->varsToGet;
 
-    if (var->status == CONSTANT) {
+    if (var->status.constant) {
         os_GetRealVar("B", &var->value);
     } else {
         if (vars == VAR_A || vars == VARS_A_AND_B) os_GetRealVar("A", &var->eq.coeff);

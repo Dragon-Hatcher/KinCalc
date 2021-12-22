@@ -98,13 +98,14 @@ void newVariableValue(MMState *state, int varNumber) {
     state->editingVar = varNumber;
 
     if (choiceNum == 0) {
-        var->status = CONSTANT;
+        var->status.constant = true;
+        var->status.calculated = false;
         getVariableInput(state, VAR_B);
     } else {
         int termVar = chooseVar(&state->eqs, varNumber);
         if (termVar == -1) return;
 
-        var->status = VARIABLE;
+        var->status.variable = true;
         LinearEq *varEq = &var->eq;
         varEq->varNum = termVar;
 

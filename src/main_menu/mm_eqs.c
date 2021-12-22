@@ -102,9 +102,9 @@ static void drawNameForVar(AllEqs *eqs, int varNum) {
 
 
 void writeVarDescription(AllEqs *eqs, VariableValue *var) {
-    if (var->status == UNDETERMINED) {
+    if (!var->status.constant && !var->status.variable) {
         txt_writeStr("?");
-    } else if (var->status == CONSTANT) {
+    } else if (var->status.constant) {
         char out[7];
         os_RealToStr(out, &var->value, 6, 1, -1);
         fixString(out);
@@ -133,6 +133,15 @@ void writeVarDescription(AllEqs *eqs, VariableValue *var) {
             os_RealToStr(out, &intercept, 6, 1, -1);
             fixString(out);
             txt_writeStr(out);
+        }
+    }
+}
+
+void clearCalculatedValues(AllEqs *eqs) {
+    for (int i = 0; i < VARIABLE_COUNT; i++) {
+        if (eqs->variables[i].status.calculated) {
+            eqs->variables[i].status.constant = false;
+            eqs->variables[i].status.calculated = false;
         }
     }
 }

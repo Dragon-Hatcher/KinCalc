@@ -8,7 +8,9 @@
 #include "menu.h"
 
 static void setVar(AllEqs *eqs, VariableValue *var, real_t *value) {
-    bool hasDependent = var->status == VARIABLE;
+    if (var->status.constant) return;
+
+    bool hasDependent = var->status.variable;
     int dependentVar;
     real_t dependentValue;
     if (hasDependent) {
@@ -19,7 +21,8 @@ static void setVar(AllEqs *eqs, VariableValue *var, real_t *value) {
         dependentValue = div;
     }
 
-    var->status = CONSTANT;
+    var->status.calculated = true;
+    var->status.constant = true;
     var->value = *value;
 
     if (hasDependent) {
@@ -34,14 +37,15 @@ static bool updateVars(AllEqs *eqs) {
         newChange = false;
         for (int i = 0; i < VARIABLE_COUNT; i++) {
             VariableValue *var = &eqs->variables[i];
-            if (var->status != VARIABLE) continue;
+            if (var->status.constant || !var->status.variable) continue;
             VariableValue *depVar = &eqs->variables[var->eq.varNum];
-            if (depVar->status != CONSTANT) continue;
+            if (!depVar->status.constant) continue;
 
             real_t depVal = depVar->value;
             real_t product = os_RealMul(&var->eq.coeff, &depVal);
             real_t sum = os_RealAdd(&product, &var->eq.intercept);
-            var->status = CONSTANT;
+            var->status.calculated = true;
+            var->status.constant = true;
             var->value = sum;
 
             newChange = true;
@@ -59,7 +63,7 @@ static bool updateVelSums(AllEqs *eqs) {
         VariableValue *vx = eqForField(eqs, VEL_SUM, i, VX);
         VariableValue *vy = eqForField(eqs, VEL_SUM, i, VY);
 
-        if (v->status == CONSTANT && vx->status != CONSTANT && vy->status == CONSTANT) {
+        if (v->status.constant && !vx->status.constant && vy->status.constant) {
             real_t vv = os_RealMul(&v->value, &v->value);
             real_t vyvy = os_RealMul(&vy->value, &vy->value);
             real_t diff = os_RealSub(&vv, &vyvy);
@@ -69,7 +73,7 @@ static bool updateVelSums(AllEqs *eqs) {
                 setVar(eqs, vx, &root);
                 change = true;
             }
-        } else if (v->status == CONSTANT && vx->status == CONSTANT && vy->status != CONSTANT) {
+        } else if (v->status.constant && vx->status.constant && !vy->status.constant) {
             real_t vv = os_RealMul(&v->value, &v->value);
             real_t vxvx = os_RealMul(&vx->value, &vx->value);
             real_t diff = os_RealSub(&vv, &vxvx);
@@ -79,7 +83,7 @@ static bool updateVelSums(AllEqs *eqs) {
                 setVar(eqs, vy, &root);
                 change = true;
             }
-        } else if (v->status != CONSTANT && vx->status == CONSTANT && vy->status == CONSTANT) {
+        } else if (!v->status.constant && vx->status.constant && vy->status.constant) {
             real_t vxvx = os_RealMul(&vx->value, &vx->value);
             real_t vyvy = os_RealMul(&vy->value, &vy->value);
             real_t sum = os_RealAdd(&vxvx, &vyvy);
@@ -102,15 +106,15 @@ static bool updateConstantVel(AllEqs *eqs) {
         VariableValue *dx = eqForField(eqs, VEL, i, DX);
         VariableValue *dt = eqForField(eqs, VEL, i, DT);
 
-        if (v->status != CONSTANT && dx->status == CONSTANT && dt->status == CONSTANT) {
+        if (!v->status.constant && dx->status.constant && dt->status.constant) {
             real_t div = os_RealDiv(&dx->value, &dt->value);
             setVar(eqs, v, &div);
             change = true;
-        } else if (v->status == CONSTANT && dx->status != CONSTANT && dt->status == CONSTANT) {
+        } else if (v->status.constant && !dx->status.constant && dt->status.constant) {
             real_t product = os_RealMul(&v->value, &dt->value);
             setVar(eqs, dx, &product);
             change = true;
-        } else if (v->status == CONSTANT && dx->status == CONSTANT && dt->status != CONSTANT) {
+        } else if (v->status.constant && dx->status.constant && !dt->status.constant) {
             real_t div = os_RealDiv(&dx->value, &v->value);
             setVar(eqs, dt, &div);
             change = true;
@@ -129,8 +133,8 @@ static bool updateConstantAcc(AllEqs *eqs) {
         VariableValue *v = eqForField(eqs, ACC, i, ACC_V);
         VariableValue *a = eqForField(eqs, ACC, i, A);
 
-        if (dx->status != CONSTANT) {
-            if (v0->status == CONSTANT && v->status == CONSTANT && a->status == CONSTANT) {
+        if (!dx->status.constant) {
+            if (v0->status.constant && v->status.constant && a->status.constant) {
                 real_t vv = os_RealMul(&v->value, &v->value);
                 real_t v0v0 = os_RealMul(&v0->value, &v0->value);
                 real_t vSquaredMinusV0Squared = os_RealSub(&vv, &v0v0);
@@ -141,7 +145,7 @@ static bool updateConstantAcc(AllEqs *eqs) {
                 real_t div = os_RealDiv(&vSquaredMinusV0Squared, &twoA);
                 setVar(eqs, dx, &div);
                 change = true;
-            } else if (dt->status == CONSTANT && v->status == CONSTANT && a->status == CONSTANT) {
+            } else if (dt->status.constant && v->status.constant && a->status.constant) {
                 real_t vDt = os_RealMul(&v->value, &dt->value);
 
                 real_t half = os_FloatToReal(0.5f);
@@ -152,7 +156,7 @@ static bool updateConstantAcc(AllEqs *eqs) {
                 real_t diff = os_RealSub(&vDt, &halfADtSquared);
                 setVar(eqs, dx, &diff);
                 change = true;
-            } else if (dt->status == CONSTANT && v0->status == CONSTANT && a->status == CONSTANT) {
+            } else if (dt->status.constant && v0->status.constant && a->status.constant) {
                 real_t v0dt = os_RealMul(&v0->value, &dt->value);
 
                 real_t half = os_FloatToReal(0.5f);
@@ -163,7 +167,7 @@ static bool updateConstantAcc(AllEqs *eqs) {
                 real_t sum = os_RealAdd(&v0dt, &halfADtSquared);
                 setVar(eqs, dx, &sum);
                 change = true;
-            } else if (dt->status == CONSTANT && v0->status == CONSTANT && v->status == CONSTANT) {
+            } else if (dt->status.constant && v0->status.constant && v->status.constant) {
                 real_t half = os_FloatToReal(0.5f);
                 real_t v0PlusV = os_RealAdd(&v0->value, &v->value);
                 real_t halfV0PlusV = os_RealMul(&half, &v0PlusV);
@@ -172,20 +176,20 @@ static bool updateConstantAcc(AllEqs *eqs) {
                 change = true;
             }
         }
-        if (dt->status != CONSTANT) {
-            if (v0->status == CONSTANT && v->status == CONSTANT && a->status == CONSTANT) {
+        if (!dt->status.constant) {
+            if (v0->status.constant && v->status.constant && a->status.constant) {
                 real_t diff = os_RealSub(&v->value, &v0->value);
                 real_t div = os_RealDiv(&diff, &a->value);
                 setVar(eqs, dt, &div);
                 change = true;
-            } else if (dx->status == CONSTANT && v0->status == CONSTANT && v->status == CONSTANT) {
+            } else if (dx->status.constant && v0->status.constant && v->status.constant) {
                 real_t two = os_FloatToReal(2.0f);
                 real_t twoDx = os_RealMul(&two, &dx->value);
                 real_t sum = os_RealAdd(&v->value, &v0->value);
                 real_t div = os_RealDiv(&twoDx, &sum);
                 setVar(eqs, dt, &div);
                 change = true;
-            } else if (dx->status == CONSTANT && v->status == CONSTANT && a->status == CONSTANT) {
+            } else if (dx->status.constant && v->status.constant && a->status.constant) {
                 real_t vv = os_RealMul(&v->value, &v->value);
                 real_t two = os_FloatToReal(2.0f);
                 real_t twoA = os_RealMul(&two, &a->value);
@@ -236,7 +240,7 @@ static bool updateConstantAcc(AllEqs *eqs) {
                         change = true;
                     }
                 }
-            } else if (dx->status == CONSTANT && v0->status == CONSTANT && a->status == CONSTANT) {
+            } else if (dx->status.constant && v0->status.constant && a->status.constant) {
                 real_t v0v0 = os_RealMul(&v0->value, &v0->value);
                 real_t two = os_FloatToReal(2.0f);
                 real_t twoA = os_RealMul(&two, &a->value);
@@ -288,13 +292,13 @@ static bool updateConstantAcc(AllEqs *eqs) {
                 }
             }
         }
-        if (v0->status != CONSTANT) {
-            if (dt->status == CONSTANT && v->status == CONSTANT && a->status == CONSTANT) {
+        if (!v0->status.constant) {
+            if (dt->status.constant && v->status.constant && a->status.constant) {
                 real_t aDt = os_RealMul(&a->value, &dt->value);
                 real_t diff = os_RealSub(&v->value, &aDt);
                 setVar(eqs, v0, &diff);
                 change = true;
-            } else if (dx->status == CONSTANT && v->status == CONSTANT && a->status == CONSTANT) {
+            } else if (dx->status.constant && v->status.constant && a->status.constant) {
                 real_t vv = os_RealMul(&v->value, &v->value);
                 real_t two = os_FloatToReal(2.0f);
                 real_t twoA = os_RealMul(&two, &a->value);
@@ -306,7 +310,7 @@ static bool updateConstantAcc(AllEqs *eqs) {
                     setVar(eqs, v0, &root);
                     change = true;
                 }
-            } else if (dx->status == CONSTANT && dt->status == CONSTANT && a->status == CONSTANT) {
+            } else if (dx->status.constant && dt->status.constant && a->status.constant) {
                 real_t half = os_FloatToReal(0.5f);
                 real_t halfA = os_RealMul(&half, &a->value);
                 real_t dtdt = os_RealMul(&dt->value, &dt->value);
@@ -315,7 +319,7 @@ static bool updateConstantAcc(AllEqs *eqs) {
                 real_t div = os_RealDiv(&diff, &dt->value);
                 setVar(eqs, v0, &div);
                 change = true;
-            } else if (dx->status == CONSTANT && dt->status == CONSTANT && v->status == CONSTANT) {
+            } else if (dx->status.constant && dt->status.constant && v->status.constant) {
                 real_t two = os_FloatToReal(2.0f);
                 real_t twoDx = os_RealMul(&two, &dx->value);
                 real_t div = os_RealDiv(&twoDx, &dt->value);
@@ -324,13 +328,13 @@ static bool updateConstantAcc(AllEqs *eqs) {
                 change = true;
             }
         }
-        if (v->status != CONSTANT) {
-            if (dt->status == CONSTANT && v0->status == CONSTANT && a->status == CONSTANT) {
+        if (!v->status.constant) {
+            if (dt->status.constant && v0->status.constant && a->status.constant) {
                 real_t aDt = os_RealMul(&a->value, &dt->value);
                 real_t sum = os_RealAdd(&v0->value, &aDt);
                 setVar(eqs, v, &sum);
                 change = true;
-            } else if (dx->status == CONSTANT && v0->status == CONSTANT && a->status == CONSTANT) {
+            } else if (dx->status.constant && v0->status.constant && a->status.constant) {
                 real_t v0v0 = os_RealMul(&v0->value, &v0->value);
                 real_t two = os_FloatToReal(2.0f);
                 real_t twoA = os_RealMul(&two, &a->value);
@@ -342,7 +346,7 @@ static bool updateConstantAcc(AllEqs *eqs) {
                     setVar(eqs, v, &root);
                     change = true;
                 }
-            } else if (dx->status == CONSTANT && v->status == CONSTANT && a->status == CONSTANT) {
+            } else if (dx->status.constant && v->status.constant && a->status.constant) {
                 real_t div = os_RealDiv(&dx->value, &dt->value);
                 real_t half = os_FloatToReal(0.5f);
                 real_t halfA = os_RealMul(&half, &a->value);
@@ -350,7 +354,7 @@ static bool updateConstantAcc(AllEqs *eqs) {
                 real_t sum = os_RealAdd(&div, &halfADt);
                 setVar(eqs, v, &sum);
                 change = true;
-            } else if (dx->status == CONSTANT && v0->status == CONSTANT && v->status == CONSTANT) {
+            } else if (dx->status.constant && v0->status.constant && v->status.constant) {
                 real_t two = os_FloatToReal(2.0f);
                 real_t twoDx = os_RealMul(&two, &dx->value);
                 real_t div = os_RealMul(&twoDx, &dt->value);
@@ -359,13 +363,13 @@ static bool updateConstantAcc(AllEqs *eqs) {
                 change = true;
             }
         }
-        if (a->status != CONSTANT) {
-            if (dt->status == CONSTANT && v0->status == CONSTANT && v->status == CONSTANT) {
+        if (!a->status.constant) {
+            if (dt->status.constant && v0->status.constant && v->status.constant) {
                 real_t diff = os_RealSub(&v->value, &v0->value);
                 real_t div = os_RealDiv(&diff, &dt->value);
                 setVar(eqs, a, &div);
                 change = true;
-            } else if (dx->status == CONSTANT && v0->status == CONSTANT && v->status == CONSTANT) {
+            } else if (dx->status.constant && v0->status.constant && v->status.constant) {
                 real_t vv = os_RealMul(&v->value, &v->value);
                 real_t v0v0 = os_RealMul(&v0->value, &v0->value);
                 real_t diff = os_RealSub(&vv, &v0v0);
@@ -374,7 +378,7 @@ static bool updateConstantAcc(AllEqs *eqs) {
                 real_t div = os_RealDiv(&diff, &twoDx);
                 setVar(eqs, a, &div);
                 change = true;
-            } else if (dx->status == CONSTANT && dt->status == CONSTANT && v->status == CONSTANT) {
+            } else if (dx->status.constant && dt->status.constant && v->status.constant) {
                 real_t vDt = os_RealMul(&v->value, &dt->value);
                 real_t diff = os_RealSub(&dx->value, &vDt);
                 real_t dtdt = os_RealMul(&dt->value, &dt->value);
@@ -383,7 +387,7 @@ static bool updateConstantAcc(AllEqs *eqs) {
                 real_t product = os_RealMul(&negTwo, &div);
                 setVar(eqs, a, &product);
                 change = true;
-            } else if (dx->status == CONSTANT && dt->status == CONSTANT && v0->status == CONSTANT) {
+            } else if (dx->status.constant && dt->status.constant && v0->status.constant) {
                 real_t v0Dt = os_RealMul(&v0->value, &dt->value);
                 real_t diff = os_RealSub(&dx->value, &v0Dt);
                 real_t dtdt = os_RealMul(&dt->value, &dt->value);

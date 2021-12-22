@@ -255,7 +255,9 @@ static bool deleteValue(MMState * state) {
 
     if (choice == 1) {
         VariableValue *var = eqForField(&state->eqs, type, eqNum, eqField);
-        var->status = UNDETERMINED;
+        var->status.constant = false;
+        var->status.variable = false;
+        var->status.calculated = false;
     }
 
     return true;
@@ -308,6 +310,11 @@ void drawMainMenu(MMState *state) {
 
         if (key == sk_Del) {
             deleteValue(state);
+            fullRedraw(state);
+        }
+
+        if (key == sk_Clear) {
+            clearCalculatedValues(&state->eqs);
             fullRedraw(state);
         }
     } while (true);

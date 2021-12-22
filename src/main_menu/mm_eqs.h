@@ -7,8 +7,10 @@
 
 #include <tice.h>
 
-typedef enum {
-    UNDETERMINED, CONSTANT, VARIABLE
+typedef struct {
+    unsigned int constant: 1;
+    unsigned int variable: 1;
+    unsigned int calculated: 1;
 } VariableStatus;
 
 typedef struct {
@@ -19,10 +21,8 @@ typedef struct {
 
 typedef struct {
     VariableStatus status;
-    union {
-        LinearEq eq;
-        real_t value;
-    };
+    real_t value;
+    LinearEq eq;
 } VariableValue;
 
 #define NAME_CHAR_COUNT 2
@@ -97,5 +97,7 @@ VarId varIdForNum(int varNum);
 void writeVarDescription(AllEqs *eqs, VariableValue *var);
 
 void fixString(char *str);
+
+void clearCalculatedValues(AllEqs *eqs);
 
 #endif //KINCALC_MM_EQS_H
