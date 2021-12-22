@@ -70,13 +70,13 @@ static int chooseVar(AllEqs *eqs, int exceptVarNum) {
     if (exceptVarId.type == FREE_VAR) {
         except = exceptVarId.eqNum;
     } else if (exceptVarId.type == VEL_SUM) {
-        except = eqs->freeVarCount + exceptVarId.eqNum * VEL_SUM_FIELD_COUNT + exceptVarId.field;
+        except = eqs->freeVarCount + (exceptVarId.eqNum * VEL_SUM_FIELD_COUNT) + exceptVarId.field;
     } else if (exceptVarId.type == VEL) {
-        except = eqs->freeVarCount + eqs->velSumCount * VEL_SUM_FIELD_COUNT + exceptVarId.varNum * VEL_FIELD_COUNT +
+        except = eqs->freeVarCount + (eqs->velSumCount * VEL_SUM_FIELD_COUNT) + (exceptVarId.eqNum * VEL_FIELD_COUNT) +
                  exceptVarId.field;
     } else {
-        except = eqs->freeVarCount + eqs->velSumCount * VEL_SUM_FIELD_COUNT + eqs->velCount * VEL_FIELD_COUNT +
-                exceptVarId.eqNum * ACC_FIELD_COUNT + exceptVarId.field;
+        except = eqs->freeVarCount + (eqs->velSumCount * VEL_SUM_FIELD_COUNT) + (eqs->velCount * VEL_FIELD_COUNT) +
+                 (exceptVarId.eqNum * ACC_FIELD_COUNT) + exceptVarId.field;
     }
 
     int choice = menuExcept("Choose a Variable:", (const char **) options, varCount, except);
