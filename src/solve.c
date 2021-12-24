@@ -4,8 +4,14 @@
 
 #include <main_menu/mm_eqs.h>
 #include <string.h>
+#include <graphx.h>
 #include "solve.h"
 #include "menu.h"
+#include "draw_simple_text.h"
+
+IllegalConfig illegalConfig = {
+        .type = NONE
+};
 
 static void setVar(AllEqs *eqs, VariableValue *var, real_t *value) {
     if (var->status.constant) return;
@@ -56,7 +62,29 @@ static bool updateVars(AllEqs *eqs) {
     return anyChange;
 }
 
+#define CHECK_DIV_BY_ZERO(VAL, TYPE) do {     \
+    if (os_RealCompare(&(VAL), &zero) == 0) { \
+        illegalConfig = (IllegalConfig) {     \
+            .type = (TYPE),                   \
+            .eqNum = i                        \
+        };                                    \
+        return  change;                       \
+    }                                         \
+} while(0);
+
+#define CHECK_NEG_ROOT(VAL, TYPE) do {       \
+    if (os_RealCompare(&(VAL), &zero) < 0) { \
+        illegalConfig = (IllegalConfig) {    \
+            .type = (TYPE),                  \
+            .eqNum = i                       \
+        };                                   \
+        return  change;                      \
+    }                                        \
+} while(0);
+
 static bool updateVelSums(AllEqs *eqs) {
+    real_t zero = os_FloatToReal(0.0f);
+
     bool change = false;
     for (int i = 0; i < eqs->velSumCount; i++) {
         VariableValue *v = eqForField(eqs, VEL_SUM, i, SUM_V);
@@ -67,32 +95,25 @@ static bool updateVelSums(AllEqs *eqs) {
             real_t vv = os_RealMul(&v->value, &v->value);
             real_t vyvy = os_RealMul(&vy->value, &vy->value);
             real_t diff = os_RealSub(&vv, &vyvy);
-            real_t zero = os_FloatToReal(0.0f);
-            if (os_RealCompare(&diff, &zero) >= 0) {
-                real_t root = os_RealSqrt(&diff);
-                setVar(eqs, vx, &root);
-                change = true;
-            }
+            CHECK_NEG_ROOT(diff, VY_GREATER_THAN_V)
+            real_t root = os_RealSqrt(&diff);
+            setVar(eqs, vx, &root);
+            change = true;
         } else if (v->status.constant && vx->status.constant && !vy->status.constant) {
             real_t vv = os_RealMul(&v->value, &v->value);
             real_t vxvx = os_RealMul(&vx->value, &vx->value);
             real_t diff = os_RealSub(&vv, &vxvx);
-            real_t zero = os_FloatToReal(0.0f);
-            if (os_RealCompare(&diff, &zero) >= 0) {
-                real_t root = os_RealSqrt(&diff);
-                setVar(eqs, vy, &root);
-                change = true;
-            }
+            CHECK_NEG_ROOT(diff, VX_GREATER_THAN_V)
+            real_t root = os_RealSqrt(&diff);
+            setVar(eqs, vy, &root);
+            change = true;
         } else if (!v->status.constant && vx->status.constant && vy->status.constant) {
             real_t vxvx = os_RealMul(&vx->value, &vx->value);
             real_t vyvy = os_RealMul(&vy->value, &vy->value);
             real_t sum = os_RealAdd(&vxvx, &vyvy);
-            real_t zero = os_FloatToReal(0.0f);
-            if (os_RealCompare(&sum, &zero) >= 0) {
-                real_t root = os_RealSqrt(&sum);
-                setVar(eqs, v, &root);
-                change = true;
-            }
+            real_t root = os_RealSqrt(&sum);
+            setVar(eqs, v, &root);
+            change = true;
         }
     }
 
@@ -100,6 +121,8 @@ static bool updateVelSums(AllEqs *eqs) {
 }
 
 static bool updateConstantVel(AllEqs *eqs) {
+    real_t zero = os_FloatToReal(0.0f);
+
     bool change = false;
     for (int i = 0; i < eqs->velCount; i++) {
         VariableValue *v = eqForField(eqs, VEL, i, VEL_V);
@@ -107,6 +130,7 @@ static bool updateConstantVel(AllEqs *eqs) {
         VariableValue *dt = eqForField(eqs, VEL, i, DT);
 
         if (!v->status.constant && dx->status.constant && dt->status.constant) {
+            CHECK_DIV_BY_ZERO(dt->value, VEL_T_ZERO)
             real_t div = os_RealDiv(&dx->value, &dt->value);
             setVar(eqs, v, &div);
             change = true;
@@ -115,6 +139,7 @@ static bool updateConstantVel(AllEqs *eqs) {
             setVar(eqs, dx, &product);
             change = true;
         } else if (v->status.constant && dx->status.constant && !dt->status.constant) {
+            CHECK_DIV_BY_ZERO(v->value, VEL_ZERO)
             real_t div = os_RealDiv(&dx->value, &v->value);
             setVar(eqs, dt, &div);
             change = true;
@@ -125,6 +150,8 @@ static bool updateConstantVel(AllEqs *eqs) {
 }
 
 static bool updateConstantAcc(AllEqs *eqs) {
+    real_t zero = os_FloatToReal(0.0f);
+
     bool change = false;
     for (int i = 0; i < eqs->accCount; i++) {
         VariableValue *dx = eqForField(eqs, ACC, i, DX);
@@ -135,6 +162,8 @@ static bool updateConstantAcc(AllEqs *eqs) {
 
         if (!dx->status.constant) {
             if (v0->status.constant && v->status.constant && a->status.constant) {
+                CHECK_DIV_BY_ZERO(a->value, ACC_ZERO)
+
                 real_t vv = os_RealMul(&v->value, &v->value);
                 real_t v0v0 = os_RealMul(&v0->value, &v0->value);
                 real_t vSquaredMinusV0Squared = os_RealSub(&vv, &v0v0);
@@ -178,14 +207,17 @@ static bool updateConstantAcc(AllEqs *eqs) {
         }
         if (!dt->status.constant) {
             if (v0->status.constant && v->status.constant && a->status.constant) {
+                CHECK_DIV_BY_ZERO(a->value, ACC_ZERO)
+
                 real_t diff = os_RealSub(&v->value, &v0->value);
                 real_t div = os_RealDiv(&diff, &a->value);
                 setVar(eqs, dt, &div);
                 change = true;
             } else if (dx->status.constant && v0->status.constant && v->status.constant) {
+                real_t sum = os_RealAdd(&v->value, &v0->value);
+                CHECK_DIV_BY_ZERO(sum, ACC_VEL_SUM)
                 real_t two = os_FloatToReal(2.0f);
                 real_t twoDx = os_RealMul(&two, &dx->value);
-                real_t sum = os_RealAdd(&v->value, &v0->value);
                 real_t div = os_RealDiv(&twoDx, &sum);
                 setVar(eqs, dt, &div);
                 change = true;
@@ -195,50 +227,50 @@ static bool updateConstantAcc(AllEqs *eqs) {
                 real_t twoA = os_RealMul(&two, &a->value);
                 real_t twoADx = os_RealMul(&twoA, &dx->value);
                 real_t diff = os_RealSub(&vv, &twoADx);
-                real_t zero = os_FloatToReal(0.0f);
-                if (os_RealCompare(&diff, &zero) >= 0) {
-                    real_t root = os_RealSqrt(&diff);
-                    real_t negV = os_RealNeg(&v->value);
-                    real_t negA = os_RealNeg(&a->value);
+                CHECK_NEG_ROOT(diff, ACC_IMPOSSIBLE_FINAL_V)
+                CHECK_DIV_BY_ZERO(a->value, ACC_ZERO)
 
-                    real_t plusNum = os_RealAdd(&negV, &root);
-                    real_t minusNum = os_RealSub(&negV, &root);
-                    real_t plus = os_RealDiv(&plusNum, &negA);
-                    real_t minus = os_RealDiv(&minusNum, &negA);
+                real_t root = os_RealSqrt(&diff);
+                real_t negV = os_RealNeg(&v->value);
+                real_t negA = os_RealNeg(&a->value);
 
-                    bool plusIsPos = os_RealCompare(&plus, &zero) >= 0;
-                    bool minusIsPos = os_RealCompare(&minus, &zero) >= 0;
+                real_t plusNum = os_RealAdd(&negV, &root);
+                real_t minusNum = os_RealSub(&negV, &root);
+                real_t plus = os_RealDiv(&plusNum, &negA);
+                real_t minus = os_RealDiv(&minusNum, &negA);
 
-                    bool usingPlus;
-                    bool possibleValue = true;
+                bool plusIsPos = os_RealCompare(&plus, &zero) >= 0;
+                bool minusIsPos = os_RealCompare(&minus, &zero) >= 0;
 
-                    if (plusIsPos && !minusIsPos) {
-                        usingPlus = true;
-                    } else if (!plusIsPos && minusIsPos) {
-                        usingPlus = false;
-                    } else if (plusIsPos && minusIsPos) {
-                        char plusStr[7];
-                        char minusStr[7];
-                        os_RealToStr(plusStr, &plus, 6, 1, -1);
-                        os_RealToStr(minusStr, &minus, 6, 1, -1);
-                        fixString(plusStr);
-                        fixString(minusStr);
-                        char *options[2] = {plusStr, minusStr};
+                bool usingPlus;
+                bool possibleValue = true;
 
-                        char title[26] = "Pick a value for \x16t(";
-                        strcat(title, eqs->accNames[i]);
-                        strcat(title, "):");
+                if (plusIsPos && !minusIsPos) {
+                    usingPlus = true;
+                } else if (!plusIsPos && minusIsPos) {
+                    usingPlus = false;
+                } else if (plusIsPos && minusIsPos) {
+                    char plusStr[7];
+                    char minusStr[7];
+                    os_RealToStr(plusStr, &plus, 6, 1, -1);
+                    os_RealToStr(minusStr, &minus, 6, 1, -1);
+                    fixString(plusStr);
+                    fixString(minusStr);
+                    char *options[2] = {plusStr, minusStr};
 
-                        int choice = menu(title, (const char **) options, 2);
-                        usingPlus = choice == 0;
-                        possibleValue = choice != -1;
-                    } else {
-                        possibleValue = false;
-                    }
-                    if (possibleValue) {
-                        setVar(eqs, dt, usingPlus ? &plus : &minus);
-                        change = true;
-                    }
+                    char title[26] = "Pick a value for \x16t(";
+                    strcat(title, eqs->accNames[i]);
+                    strcat(title, "):");
+
+                    int choice = menu(title, (const char **) options, 2);
+                    usingPlus = choice == 0;
+                    possibleValue = choice != -1;
+                } else {
+                    possibleValue = false;
+                }
+                if (possibleValue) {
+                    setVar(eqs, dt, usingPlus ? &plus : &minus);
+                    change = true;
                 }
             } else if (dx->status.constant && v0->status.constant && a->status.constant) {
                 real_t v0v0 = os_RealMul(&v0->value, &v0->value);
@@ -246,49 +278,49 @@ static bool updateConstantAcc(AllEqs *eqs) {
                 real_t twoA = os_RealMul(&two, &a->value);
                 real_t twoADx = os_RealMul(&twoA, &dx->value);
                 real_t sum = os_RealAdd(&v0v0, &twoADx);
-                real_t zero = os_FloatToReal(0.0f);
-                if (os_RealCompare(&sum, &zero) >= 0) {
-                    real_t root = os_RealSqrt(&sum);
-                    real_t negV0 = os_RealNeg(&v0->value);
+                CHECK_NEG_ROOT(sum, ACC_IMPOSSIBLE_INITIAL_V)
+                CHECK_DIV_BY_ZERO(a->value, ACC_ZERO)
 
-                    real_t plusNum = os_RealAdd(&negV0, &root);
-                    real_t minusNum = os_RealSub(&negV0, &root);
-                    real_t plus = os_RealDiv(&plusNum, &a->value);
-                    real_t minus = os_RealDiv(&minusNum, &a->value);
+                real_t root = os_RealSqrt(&sum);
+                real_t negV0 = os_RealNeg(&v0->value);
 
-                    bool plusIsPos = os_RealCompare(&plus, &zero) >= 0;
-                    bool minusIsPos = os_RealCompare(&minus, &zero) >= 0;
+                real_t plusNum = os_RealAdd(&negV0, &root);
+                real_t minusNum = os_RealSub(&negV0, &root);
+                real_t plus = os_RealDiv(&plusNum, &a->value);
+                real_t minus = os_RealDiv(&minusNum, &a->value);
 
-                    bool usingPlus;
-                    bool possibleValue = true;
+                bool plusIsPos = os_RealCompare(&plus, &zero) >= 0;
+                bool minusIsPos = os_RealCompare(&minus, &zero) >= 0;
 
-                    if (plusIsPos && !minusIsPos) {
-                        usingPlus = true;
-                    } else if (!plusIsPos && minusIsPos) {
-                        usingPlus = false;
-                    } else if (plusIsPos && minusIsPos) {
-                        char plusStr[7];
-                        char minusStr[7];
-                        os_RealToStr(plusStr, &plus, 6, 1, -1);
-                        os_RealToStr(minusStr, &minus, 6, 1, -1);
-                        fixString(plusStr);
-                        fixString(minusStr);
-                        char *options[2] = {plusStr, minusStr};
+                bool usingPlus;
+                bool possibleValue = true;
 
-                        char title[26] = "Pick a value for \x16t(";
-                        strcat(title, eqs->accNames[i]);
-                        strcat(title, "):");
+                if (plusIsPos && !minusIsPos) {
+                    usingPlus = true;
+                } else if (!plusIsPos && minusIsPos) {
+                    usingPlus = false;
+                } else if (plusIsPos && minusIsPos) {
+                    char plusStr[7];
+                    char minusStr[7];
+                    os_RealToStr(plusStr, &plus, 6, 1, -1);
+                    os_RealToStr(minusStr, &minus, 6, 1, -1);
+                    fixString(plusStr);
+                    fixString(minusStr);
+                    char *options[2] = {plusStr, minusStr};
 
-                        int choice = menu(title, (const char **) options, 2);
-                        usingPlus = choice == 0;
-                        possibleValue = choice != -1;
-                    } else {
-                        possibleValue = false;
-                    }
-                    if (possibleValue) {
-                        setVar(eqs, dt, usingPlus ? &plus : &minus);
-                        change = true;
-                    }
+                    char title[26] = "Pick a value for \x16t(";
+                    strcat(title, eqs->accNames[i]);
+                    strcat(title, "):");
+
+                    int choice = menu(title, (const char **) options, 2);
+                    usingPlus = choice == 0;
+                    possibleValue = choice != -1;
+                } else {
+                    possibleValue = false;
+                }
+                if (possibleValue) {
+                    setVar(eqs, dt, usingPlus ? &plus : &minus);
+                    change = true;
                 }
             }
         }
@@ -304,13 +336,13 @@ static bool updateConstantAcc(AllEqs *eqs) {
                 real_t twoA = os_RealMul(&two, &a->value);
                 real_t twoADx = os_RealMul(&twoA, &dx->value);
                 real_t diff = os_RealSub(&vv, &twoADx);
-                real_t zero = os_FloatToReal(0.0f);
-                if (os_RealCompare(&diff, &zero) >= 0) {
-                    real_t root = os_RealSqrt(&diff);
-                    setVar(eqs, v0, &root);
-                    change = true;
-                }
+                CHECK_NEG_ROOT(diff, ACC_IMPOSSIBLE_FINAL_V)
+                real_t root = os_RealSqrt(&diff);
+                setVar(eqs, v0, &root);
+                change = true;
             } else if (dx->status.constant && dt->status.constant && a->status.constant) {
+                CHECK_DIV_BY_ZERO(dt->value, ACC_T_ZERO)
+
                 real_t half = os_FloatToReal(0.5f);
                 real_t halfA = os_RealMul(&half, &a->value);
                 real_t dtdt = os_RealMul(&dt->value, &dt->value);
@@ -320,6 +352,8 @@ static bool updateConstantAcc(AllEqs *eqs) {
                 setVar(eqs, v0, &div);
                 change = true;
             } else if (dx->status.constant && dt->status.constant && v->status.constant) {
+                CHECK_DIV_BY_ZERO(dt->value, ACC_T_ZERO)
+
                 real_t two = os_FloatToReal(2.0f);
                 real_t twoDx = os_RealMul(&two, &dx->value);
                 real_t div = os_RealDiv(&twoDx, &dt->value);
@@ -340,13 +374,13 @@ static bool updateConstantAcc(AllEqs *eqs) {
                 real_t twoA = os_RealMul(&two, &a->value);
                 real_t twoADx = os_RealMul(&twoA, &dx->value);
                 real_t sum = os_RealAdd(&v0v0, &twoADx);
-                real_t zero = os_FloatToReal(0.0f);
-                if (os_RealCompare(&sum, &zero) >= 0) {
-                    real_t root = os_RealSqrt(&sum);
-                    setVar(eqs, v, &root);
-                    change = true;
-                }
+                CHECK_NEG_ROOT(sum, ACC_IMPOSSIBLE_INITIAL_V)
+                real_t root = os_RealSqrt(&sum);
+                setVar(eqs, v, &root);
+                change = true;
             } else if (dx->status.constant && v->status.constant && a->status.constant) {
+                CHECK_DIV_BY_ZERO(dt->value, ACC_T_ZERO)
+
                 real_t div = os_RealDiv(&dx->value, &dt->value);
                 real_t half = os_FloatToReal(0.5f);
                 real_t halfA = os_RealMul(&half, &a->value);
@@ -365,11 +399,15 @@ static bool updateConstantAcc(AllEqs *eqs) {
         }
         if (!a->status.constant) {
             if (dt->status.constant && v0->status.constant && v->status.constant) {
+                CHECK_DIV_BY_ZERO(dt->value, ACC_T_ZERO)
+
                 real_t diff = os_RealSub(&v->value, &v0->value);
                 real_t div = os_RealDiv(&diff, &dt->value);
                 setVar(eqs, a, &div);
                 change = true;
             } else if (dx->status.constant && v0->status.constant && v->status.constant) {
+                CHECK_DIV_BY_ZERO(dx->value, ACC_X_ZERO)
+
                 real_t vv = os_RealMul(&v->value, &v->value);
                 real_t v0v0 = os_RealMul(&v0->value, &v0->value);
                 real_t diff = os_RealSub(&vv, &v0v0);
@@ -379,6 +417,8 @@ static bool updateConstantAcc(AllEqs *eqs) {
                 setVar(eqs, a, &div);
                 change = true;
             } else if (dx->status.constant && dt->status.constant && v->status.constant) {
+                CHECK_DIV_BY_ZERO(dt->value, ACC_T_ZERO)
+
                 real_t vDt = os_RealMul(&v->value, &dt->value);
                 real_t diff = os_RealSub(&dx->value, &vDt);
                 real_t dtdt = os_RealMul(&dt->value, &dt->value);
@@ -388,6 +428,8 @@ static bool updateConstantAcc(AllEqs *eqs) {
                 setVar(eqs, a, &product);
                 change = true;
             } else if (dx->status.constant && dt->status.constant && v0->status.constant) {
+                CHECK_DIV_BY_ZERO(dt->value, ACC_T_ZERO)
+
                 real_t v0Dt = os_RealMul(&v0->value, &dt->value);
                 real_t diff = os_RealSub(&dx->value, &v0Dt);
                 real_t dtdt = os_RealMul(&dt->value, &dt->value);
@@ -404,14 +446,40 @@ static bool updateConstantAcc(AllEqs *eqs) {
 }
 
 void solve(AllEqs *eqs) {
+    illegalConfig = (IllegalConfig) {
+            .type = NONE
+    };
+
     bool change = true;
     while (change) {
         change = false;
 
         change = updateVelSums(eqs);
+        if (illegalConfig.type != NONE) break;
         change = change || updateConstantVel(eqs);
+        if (illegalConfig.type != NONE) break;
         change = change || updateConstantAcc(eqs);
+        if (illegalConfig.type != NONE) break;
 
         change = change || updateVars(eqs);
+    }
+
+    if (illegalConfig.type != NONE) {
+        clearCalculatedValues(eqs);
+        gfx_FillScreen(0xFF);
+        txt_writeStrAtPos(0, 0, "Impossible values in ");
+        EqType eqType = illegalConfigEqType[illegalConfig.type];
+        if (eqType == VEL_SUM) {
+            txt_writeStr(eqs->velSumNames[illegalConfig.eqNum]);
+        } else if (eqType == VEL) {
+            txt_writeStr(eqs->velNames[illegalConfig.eqNum]);
+        } else if (eqType == ACC) {
+            txt_writeStr(eqs->accNames[illegalConfig.eqNum]);
+        }
+        txt_writeStr(".");
+        txt_writeStrAtPos(0, 2, illegalConfigDescriptions[illegalConfig.type]);
+        txt_writeStrAtPos(0, 4, "Press any key.");
+
+        while (!os_GetCSC());
     }
 }
