@@ -86,11 +86,11 @@ static int chooseVar(AllEqs *eqs, int exceptVarNum) {
 
 void newVariableValue(MMState *state, int varNumber) {
     char *eqOptions[5];
-    eqOptions[0] = "b";
+    eqOptions[0] = "c";
     eqOptions[1] = "x";
     eqOptions[2] = "ax";
-    eqOptions[3] = "x + b";
-    eqOptions[4] = "ax + b";
+    eqOptions[3] = "x + c";
+    eqOptions[4] = "ax + c";
 
     int choiceNum = menu("Value Type:", (const char **) eqOptions, 5);
     if (choiceNum == -1) return;
@@ -101,7 +101,7 @@ void newVariableValue(MMState *state, int varNumber) {
     if (choiceNum == 0) {
         var->status.constant = true;
         var->status.calculated = false;
-        getVariableInput(state, VAR_B);
+        getVariableInput(state, VAR_C);
     } else {
         int termVar = chooseVar(&state->eqs, varNumber);
         if (termVar == -1) return;
@@ -114,7 +114,7 @@ void newVariableValue(MMState *state, int varNumber) {
         if (choiceNum == 1 || choiceNum == 3) varEq->coeff = os_FloatToReal(1.0f);
 
         if (choiceNum == 2) getVariableInput(state, VAR_A);
-        if (choiceNum == 3) getVariableInput(state, VAR_B);
-        if (choiceNum == 4) getVariableInput(state, VARS_A_AND_B);
+        if (choiceNum == 3) getVariableInput(state, VAR_C);
+        if (choiceNum == 4) getVariableInput(state, VARS_A_AND_C);
     }
 }

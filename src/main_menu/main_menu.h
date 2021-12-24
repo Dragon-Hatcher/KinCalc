@@ -11,7 +11,7 @@
 #define PROGRAM_STATE_APP_VAR_NAME "AJDBHC"
 
 typedef enum {
-    VAR_A = 0, VAR_B, VARS_A_AND_B
+    VAR_A = 0, VAR_C, VARS_A_AND_C
 } VarsToGet;
 
 typedef struct {
