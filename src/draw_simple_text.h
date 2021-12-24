@@ -8,6 +8,8 @@
 #define START_HEIGHT LINE_GAP
 #define START_WIDTH CHAR_GAP
 
+int txt_charsLeftInRow();
+
 void txt_resetX();
 void txt_resetY();
 void txt_reset();

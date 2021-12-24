@@ -127,11 +127,17 @@ void writeVarDescription(AllEqs *eqs, VariableValue *var) {
             bool isNeg = os_RealCompare(&zero, &intercept) == 1;
             if (isNeg) intercept = os_RealNeg(&intercept);
 
-            txt_writeStr(isNeg ? "-" : "+");
-
             char out[7];
             os_RealToStr(out, &intercept, 6, 1, -1);
             fixString(out);
+            int charsRemaining = txt_charsLeftInRow() - strlen(out);
+
+            if (charsRemaining >= 3) {
+                txt_writeStr(isNeg ? " - " : " + ");
+            } else {
+                txt_writeStr(isNeg ? "-" : "+");
+            }
+
             txt_writeStr(out);
         }
     }

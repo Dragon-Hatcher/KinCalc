@@ -4,12 +4,17 @@
 
 #include "draw_simple_text.h"
 
+#include <tice.h>
 #include <fontlibc.h>
 #include <string.h>
 #include "init_font.h"
 
 static int pixelsOver = START_WIDTH;
 static int pixelsDown = START_HEIGHT;
+
+int txt_charsLeftInRow() {
+    return (LCD_WIDTH - pixelsOver) / CHAR_WIDTH;
+}
 
 void txt_resetX() { pixelsOver = START_WIDTH; }
 
