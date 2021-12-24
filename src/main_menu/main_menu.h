@@ -8,7 +8,7 @@
 #include <fileioc.h>
 #include "mm_eqs.h"
 
-#define PROGRAM_STATE_APP_VAR_NAME "AJDBHC"
+#define PROGRAM_STATE_APP_VAR_NAME "KINCALCS"
 
 typedef enum {
     VAR_A = 0, VAR_C, VARS_A_AND_C
