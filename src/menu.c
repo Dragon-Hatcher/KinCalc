@@ -5,7 +5,6 @@
 #include "menu.h"
 
 #include <graphx.h>
-#include <string.h>
 #include "bottom_menu.h"
 #include "draw_simple_text.h"
 #include "init_font.h"
