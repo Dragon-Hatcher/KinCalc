@@ -445,24 +445,88 @@ static bool updateConstantAcc(AllEqs *eqs) {
     return change;
 }
 
+static bool solveSystem(AllEqs *eqs) {
+    real_t zero = os_FloatToReal(0.0f);
+
+    for (int i = 0; i < eqs->accCount; i++) {
+        for (int j = 0; j < eqs->velCount; j++) {
+            VariableValue *acc_dx = eqForField(eqs, ACC, i, DX);
+            VariableValue *acc_dt = eqForField(eqs, ACC, i, DT);
+            VariableValue *acc_v0 = eqForField(eqs, ACC, i, V0);
+            VariableValue *acc_a = eqForField(eqs, ACC, i, A);
+
+            VariableValue *vel_dx = eqForField(eqs, VEL, j, DX);
+            VariableValue *vel_dt = eqForField(eqs, VEL, j, DT);
+            VariableValue *vel_v = eqForField(eqs, VEL, j, VEL_V);
+
+            int acc_v0_num = eqNumForField(ACC, i, V0);
+            int vel_v_num = eqNumForField(VEL, j, VEL_V);
+            int acc_dt_num = eqNumForField(ACC, i, DT);
+            int vel_dt_num = eqNumForField(VEL, j, DT);
+
+            if (!(acc_dx->status.constant && acc_a->status.constant && vel_dx->status.constant)) continue;
+            if (!(!acc_v0->status.constant && acc_v0->status.variable &&
+                  os_RealCompare(&acc_v0->eq.intercept, &zero) == 0))
+                continue;
+            if (!(!vel_v->status.constant && vel_v->status.variable &&
+                  os_RealCompare(&vel_v->eq.intercept, &zero) == 0))
+                continue;
+            if (!(acc_v0->eq.varNum == vel_v->eq.varNum || acc_v0->eq.varNum == vel_v_num ||
+                  vel_v->eq.varNum == acc_v0_num))
+                continue;
+            bool acc_dt_isVar = acc_dt->status.variable;
+            bool vel_dt_isVar = vel_dt->status.variable;
+            if (!(!acc_dt->status.constant && (!acc_dt_isVar || os_RealCompare(&acc_dt->eq.intercept, &zero) == 0)))
+                continue;
+            if (!(!vel_dt->status.constant && (!vel_dt_isVar || os_RealCompare(&vel_dt->eq.intercept, &zero) == 0)))
+                continue;
+            if (!(
+                    (acc_dt_isVar && vel_dt_isVar && vel_dt->eq.varNum == acc_dt->eq.varNum) ||
+                    (vel_dt_isVar && vel_dt->eq.varNum == acc_dt_num) ||
+                    (acc_dt_isVar && acc_dt->eq.varNum == vel_dt_num)))
+                continue;
+
+            if (os_RealCompare(&acc_a->value, &zero) == 0) continue;
+            real_t half = os_FloatToReal(0.5f);
+            real_t halfAccA = os_RealMul(&half, &acc_a->value);
+
+            real_t v0VelDx = os_RealMul(&acc_v0->eq.coeff, &vel_dx->value);
+            real_t velVVelDt = os_RealMul(&vel_v->eq.coeff, &vel_dt->eq.coeff);
+            if (os_RealCompare(&velVVelDt, &zero) == 0) continue;
+            real_t div = os_RealDiv(&v0VelDx, &velVVelDt);
+            real_t diff = os_RealSub(&acc_dx->value, &div);
+            real_t div2 = os_RealDiv(&diff, &halfAccA);
+            if (os_RealCompare(&div2, &zero) < 0) continue;
+            real_t root = os_RealSqrt(&div2);
+            setVar(eqs, acc_dt, &root);
+
+            return true;
+        }
+    }
+
+    return false;
+}
+
 void solve(AllEqs *eqs) {
     illegalConfig = (IllegalConfig) {
             .type = NONE
     };
 
-    bool change = true;
-    while (change) {
-        change = false;
+    do {
+        bool change = true;
+        while (change) {
+            change = false;
 
-        change = updateVelSums(eqs);
-        if (illegalConfig.type != NONE) break;
-        change = change || updateConstantVel(eqs);
-        if (illegalConfig.type != NONE) break;
-        change = change || updateConstantAcc(eqs);
-        if (illegalConfig.type != NONE) break;
+            change = updateVelSums(eqs);
+            if (illegalConfig.type != NONE) break;
+            change = change || updateConstantVel(eqs);
+            if (illegalConfig.type != NONE) break;
+            change = change || updateConstantAcc(eqs);
+            if (illegalConfig.type != NONE) break;
 
-        change = change || updateVars(eqs);
-    }
+            change = change || updateVars(eqs);
+        }
+    } while(solveSystem(eqs));
 
     if (illegalConfig.type != NONE) {
         clearCalculatedValues(eqs);
