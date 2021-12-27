@@ -12,7 +12,7 @@
 static int chooseVar(AllEqs *eqs, int exceptVarNum) {
     int varCount = eqs->accCount * 5 + eqs->velCount * 3 + eqs->velSumCount * 3 + eqs->freeVarCount;
     int varNum = 0;
-    char strs[varCount][NAME_SIZE + 3];
+    char strs[varCount][NAME_SIZE + 4];
     int assoc[varCount];
     for (int i = 0; i < varCount; i++) {
         for (int j = 0; j < NAME_SIZE + 3; j++) {
@@ -30,35 +30,35 @@ static int chooseVar(AllEqs *eqs, int exceptVarNum) {
         strcat(strs[varNum], eqs->velSumNames[i]);
         strcat(strs[varNum++], "   ");
         assoc[varNum] = eqNumForField(VEL_SUM, i, VX);
-        strcat(strs[varNum++], "   vx");
+        strcat(strs[varNum++], "   vx ");
         assoc[varNum] = eqNumForField(VEL_SUM, i, VY);
-        strcat(strs[varNum++], "   vy");
+        strcat(strs[varNum++], "   vy ");
     }
     for (int i = 0; i < eqs->velCount; i++) {
         assoc[varNum] = eqNumForField(VEL, i, DX);
         strcat(strs[varNum], eqs->velNames[i]);
         strcat(strs[varNum], strlen(eqs->velNames[i]) == 1 ? ": \x16" : ":\x16");
-        char str[2] = {lowercase(eqs->velNames[i][0]), '\0'};
+        char str[3] = {lowercase(eqs->velNames[i][0]), '\0', ' '};
         strcat(strs[varNum++], str);
         assoc[varNum] = eqNumForField(VEL, i, DT);
-        strcat(strs[varNum++], "   \x16t");
+        strcat(strs[varNum++], "   \x16t ");
         assoc[varNum] = eqNumForField(VEL, i, VEL_V);
-        strcat(strs[varNum++], "   v ");
+        strcat(strs[varNum++], "   v  ");
     }
     for (int i = 0; i < eqs->accCount; i++) {
         strcat(strs[varNum], eqs->accNames[i]);
         strcat(strs[varNum], strlen(eqs->accNames[i]) == 1 ? ": \x16" : ":\x16");
         assoc[varNum] = eqNumForField(ACC, i, DX);
-        char str[2] = {lowercase(eqs->accNames[i][0]), '\0'};
+        char str[3] = {lowercase(eqs->accNames[i][0]), '\0', ' '};
         strcat(strs[varNum++], str);
         assoc[varNum] = eqNumForField(ACC, i, DT);
-        strcat(strs[varNum++], "   \x16t");
+        strcat(strs[varNum++], "   \x16t ");
         assoc[varNum] = eqNumForField(ACC, i, V0);
-        strcat(strs[varNum++], "   v0");
+        strcat(strs[varNum++], "   v0 ");
         assoc[varNum] = eqNumForField(ACC, i, ACC_V);
-        strcat(strs[varNum++], "   v ");
+        strcat(strs[varNum++], "   v  ");
         assoc[varNum] = eqNumForField(ACC, i, A);
-        strcat(strs[varNum++], "   a ");
+        strcat(strs[varNum++], "   a  ");
     }
     char *options[varCount];
     for (int i = 0; i < varCount; i++) {
