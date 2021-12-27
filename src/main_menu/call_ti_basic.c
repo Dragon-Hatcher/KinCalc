@@ -22,11 +22,16 @@ int callback(__attribute__((unused)) void *data, __attribute__((unused)) int ret
     VariableValue *var = &state->eqs.variables[state->editingVar];
     VarsToGet vars = state->varsToGet;
 
-    if (var->status.constant) {
+    var->status.calculated = false;
+    if (vars == VAR_C_CONST) {
         os_GetRealVar("C", &var->value);
+        var->status.constant = true;
+        var->status.variable = false;
     } else {
+        var->status.constant = false;
+        var->status.variable = true;
         if (vars == VAR_A || vars == VARS_A_AND_C) os_GetRealVar("A", &var->eq.coeff);
-        if (vars == VAR_C || vars == VARS_A_AND_C) os_GetRealVar("C", &var->eq.intercept);
+        if (vars == VAR_C_OFFSET || vars == VARS_A_AND_C) os_GetRealVar("C", &var->eq.intercept);
     }
 
     drawMainMenu(state);
@@ -41,8 +46,8 @@ int callback(__attribute__((unused)) void *data, __attribute__((unused)) int ret
 const char codeA[] = {tClLCD, tEnter, tPrompt, tA};
 const char codeC[] = {tClLCD, tEnter, tPrompt, tC};
 const char codeAC[] = {tClLCD, tEnter, tPrompt, tA, tComma, tC};
-const char *codes[] = {codeA, codeC, codeAC};
-const int codeSizes[] = {sizeof codeA, sizeof codeC, sizeof codeAC};
+const char *codes[] = {codeA, codeC, codeAC, codeC};
+const int codeSizes[] = {sizeof codeA, sizeof codeC, sizeof codeAC, sizeof codeC};
 
 void getVariableInput(MMState *state, VarsToGet vars) {
     state->varsToGet = vars;
@@ -50,7 +55,7 @@ void getVariableInput(MMState *state, VarsToGet vars) {
     gfx_End();
 
     if (vars == VAR_A || vars == VARS_A_AND_C) ti_DeleteVar("A", TI_REAL_TYPE);
-    if (vars == VAR_C || vars == VARS_A_AND_C) ti_DeleteVar("C", TI_REAL_TYPE);
+    if (vars == VAR_C_OFFSET || vars == VARS_A_AND_C) ti_DeleteVar("C", TI_REAL_TYPE);
 
     ti_var_t program = ti_OpenVar(GETTER_PROGRAM_NAME, "w", TI_PPRGM_TYPE);
     ti_Write(codes[vars], codeSizes[vars], 1, program);

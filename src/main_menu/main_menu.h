@@ -11,7 +11,7 @@
 #define PROGRAM_STATE_APP_VAR_NAME "KINCALCS"
 
 typedef enum {
-    VAR_A = 0, VAR_C, VARS_A_AND_C
+    VAR_A = 0, VAR_C_OFFSET, VARS_A_AND_C, VAR_C_CONST
 } VarsToGet;
 
 typedef struct {

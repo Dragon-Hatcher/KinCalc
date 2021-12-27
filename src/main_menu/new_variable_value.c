@@ -99,14 +99,11 @@ void newVariableValue(MMState *state, int varNumber) {
     state->editingVar = varNumber;
 
     if (choiceNum == 0) {
-        var->status.constant = true;
-        var->status.calculated = false;
-        getVariableInput(state, VAR_C);
+        getVariableInput(state, VAR_C_CONST);
     } else {
         int termVar = chooseVar(&state->eqs, varNumber);
         if (termVar == -1) return;
 
-        var->status.variable = true;
         LinearEq *varEq = &var->eq;
         varEq->varNum = termVar;
 
@@ -114,7 +111,7 @@ void newVariableValue(MMState *state, int varNumber) {
         if (choiceNum == 1 || choiceNum == 3) varEq->coeff = os_FloatToReal(1.0f);
 
         if (choiceNum == 2) getVariableInput(state, VAR_A);
-        if (choiceNum == 3) getVariableInput(state, VAR_C);
+        if (choiceNum == 3) getVariableInput(state, VAR_C_OFFSET);
         if (choiceNum == 4) getVariableInput(state, VARS_A_AND_C);
     }
 }
