@@ -84,18 +84,28 @@ static int chooseVar(AllEqs *eqs, int exceptVarNum) {
     return assoc[choice];
 }
 
-void newVariableValue(MMState *state, int varNumber) {
-    char *eqOptions[5];
-    eqOptions[0] = "c";
-    eqOptions[1] = "x";
-    eqOptions[2] = "ax";
-    eqOptions[3] = "x + c";
-    eqOptions[4] = "ax + c";
+const char *eqOptions[5] = {"c", "x", "ax", "x + c", "ax + c"};
+const char *accEqOptions[6] = {"-9.8", "c", "x", "ax", "x + c", "ax + c"};
 
-    int choiceNum = menu("Value Type:", (const char **) eqOptions, 5);
+void newVariableValue(MMState *state, int varNumber, bool isAcc) {
+
+    int choiceNum = menu("Value Type:", isAcc ? accEqOptions : eqOptions, isAcc ? 6 : 5);
     if (choiceNum == -1) return;
 
     VariableValue *var = &state->eqs.variables[varNumber];
+
+    if (isAcc) {
+        if (choiceNum == 0) {
+            var->value = os_FloatToReal(-9.81f);
+            var->status.constant = true;
+            var->status.variable = false;
+            var->status.calculated = false;
+            return;
+        } else {
+            choiceNum--;
+        }
+    }
+
     state->editingVar = varNumber;
 
     if (choiceNum == 0) {

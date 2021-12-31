@@ -8,6 +8,6 @@
 #include "mm_eqs.h"
 #include "main_menu.h"
 
-void newVariableValue(MMState *state, int varNumber);
+void newVariableValue(MMState *state, int varNumber, bool isAcc);
 
 #endif //KINCALC_NEW_VARIABLE_VALUE_H
