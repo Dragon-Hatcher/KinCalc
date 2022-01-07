@@ -123,5 +123,11 @@ void newVariableValue(MMState *state, int varNumber, bool isAcc) {
         if (choiceNum == 2) getVariableInput(state, VAR_A);
         if (choiceNum == 3) getVariableInput(state, VAR_C_OFFSET);
         if (choiceNum == 4) getVariableInput(state, VARS_A_AND_C);
+
+        if (choiceNum == 1) {
+            var->status.calculated = false;
+            var->status.constant = false;
+            var->status.variable = true;
+        }
     }
 }
